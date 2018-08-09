@@ -1,4 +1,4 @@
-package com.frank.lib_recyclerview;
+package com.frank.librecyclerview;
 
 import android.content.Context;
 import android.support.annotation.DrawableRes;
@@ -24,10 +24,12 @@ public class CommonViewHolder extends RecyclerView.ViewHolder {
 
     private static final int INVALIDATE_VIEW_TYPE = -1;
 
-    // 相关集合
-    private SparseArray<View> mViews = new SparseArray<>();// 用来存放子 View 减少 findViewById 的次数
-    private List<Integer> mClickIds = new ArrayList<>();  // 用来存放设置了点击事件的 View 的ID
-    private List<Integer> mLongClickIds = new ArrayList<>();// 用来存放设置了长按事件的 View 的ID
+    // 用来存放子 View 减少 findViewById 的次数
+    private SparseArray<View> mViews = new SparseArray<>();
+    // 用来存放设置了点击事件的 View 的 ID(防止多次 bindViewData, 创建多个点击事件实例)
+    private List<Integer> mClickIds = new ArrayList<>();
+    // 用来存放设置了长按事件的 View 的 ID(防止多次 bindViewData, 创建多个点击事件实例)
+    private List<Integer> mLongClickIds = new ArrayList<>();
 
     // 获取当前的 View 类型
     private int mViewType = INVALIDATE_VIEW_TYPE;
@@ -130,7 +132,7 @@ public class CommonViewHolder extends RecyclerView.ViewHolder {
             getView(viewId).setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    return mClickInteraction.onItemClickLongClick(v, getPositionWithoutHeader((ViewGroup)
+                    return mClickInteraction.onItemChildLongClick(v, getPositionWithoutHeader((ViewGroup)
                             itemView.getParent()));
                 }
             });
@@ -170,18 +172,26 @@ public class CommonViewHolder extends RecyclerView.ViewHolder {
         return holderPosition;
     }
 
+    /**
+     * 条目点击交互的接口
+     */
     public interface OnItemClickInteraction {
-
+        // 条目的点击
         void onItemClick(View v, int position);
 
+        // 条目的长按
         boolean onItemLongClick(View v, int position);
 
+        // 条目子元素的点击
         void onItemChildClick(View v, int position);
 
-        boolean onItemClickLongClick(View v, int position);
-
+        // 条目子元素的长按
+        boolean onItemChildLongClick(View v, int position);
     }
 
+    /**
+     * 用户加载图片
+     */
     public interface HolderImageLoader {
         void displayImage(Context context, String uri, ImageView imageView);
 

@@ -3,8 +3,8 @@ package com.frank.frecyclerview
 import android.content.Context
 import android.view.View
 import android.widget.Toast
-import com.frank.lib_recyclerview.CommonRecyclerAdapter
-import com.frank.lib_recyclerview.CommonViewHolder
+import com.frank.librecyclerview.CommonRecyclerAdapter
+import com.frank.librecyclerview.CommonViewHolder
 
 /**
  * Created by Frank on 2018/8/3.

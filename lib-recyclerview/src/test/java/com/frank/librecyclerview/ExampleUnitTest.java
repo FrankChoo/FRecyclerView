@@ -1,4 +1,4 @@
-package com.frank.lib_recyclerview;
+package com.frank.librecyclerview;
 
 import org.junit.Test;
 

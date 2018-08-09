@@ -1,4 +1,4 @@
-package com.frank.lib_recyclerview;
+package com.frank.librecyclerview;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.GridLayoutManager;

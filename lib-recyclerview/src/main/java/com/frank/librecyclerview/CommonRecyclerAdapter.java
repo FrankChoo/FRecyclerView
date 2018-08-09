@@ -1,4 +1,4 @@
-package com.frank.lib_recyclerview;
+package com.frank.librecyclerview;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -30,9 +30,9 @@ import java.util.List;
  * step1: 在 convert 中调用 holder.addClickListener/addLongClickListener
  * @see CommonViewHolder#addClickListener
  * @see CommonViewHolder#addLongClickListener
- * step2: 复写 onItemChildClick/onItemClickLongClick
+ * step2: 复写 onItemChildClick/onItemChildLongClick
  * @see #onItemChildClick
- * @see #onItemClickLongClick
+ * @see #onItemChildLongClick
  */
 public abstract class CommonRecyclerAdapter<T> extends RecyclerView.Adapter<CommonViewHolder>
         implements CommonViewHolder.OnItemClickInteraction {
@@ -95,7 +95,7 @@ public abstract class CommonRecyclerAdapter<T> extends RecyclerView.Adapter<Comm
     }
 
     @Override
-    public boolean onItemClickLongClick(View v, int position) {
+    public boolean onItemChildLongClick(View v, int position) {
         return false;
     }
 

@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import com.frank.lib_recyclerview.LoadViewCreator
+import com.frank.librecyclerview.LoadViewCreator
 
 /**
  * Created by Frank on 2018/8/3.

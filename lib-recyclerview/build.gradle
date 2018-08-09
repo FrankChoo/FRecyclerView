@@ -16,6 +16,5 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     // 需要外界再次 Implement
     implementation 'com.android.support:appcompat-v7:27.1.1'
-    implementation "com.android.support:appcompat-v7:27.1.1"
     implementation "com.android.support:recyclerview-v7:27.1.1"
 }

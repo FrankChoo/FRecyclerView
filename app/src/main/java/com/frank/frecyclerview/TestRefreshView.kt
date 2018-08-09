@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import com.frank.lib_recyclerview.RefreshViewCreator
+import com.frank.librecyclerview.RefreshViewCreator
 
 /**
  * Created by Frank on 2018/8/3.
