@@ -11,12 +11,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 /**
- * Created by FrankChoo on 2017/10/11.
- * Email: frankchoochina@gmail.com
- * Description:
  * 支持下拉刷新的View, 通过通过addRefreshViewCreator()去自定义下拉刷新效果
  * 支持侧滑删除与长按拖动
  * 继承了WrapRecyclerView: 添加Header和Footer的功能
+ *
+ * @author Frank <a href="frankchoochina@gmail.com">Contact me.</a>
+ * @version 1.0
+ * @since 2017/10/11.
  */
 public class RefreshRecyclerView extends WrapRecyclerView {
 

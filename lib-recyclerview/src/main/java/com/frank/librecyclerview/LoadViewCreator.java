@@ -5,9 +5,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 /**
- * Created by FrankChoo on 2017/10/11.
- * Email: frankchoochina@gmail.com
- * Description: 用于上拉加载的 View
+ * 用于上拉加载的 ViewCreator
+ *
+ * @author Frank <a href="xiaoyu.zhu@1hai.cn">Contact me.</a>
+ * @version 1.0
+ * @since 2017/10/11
  */
 public interface LoadViewCreator {
 

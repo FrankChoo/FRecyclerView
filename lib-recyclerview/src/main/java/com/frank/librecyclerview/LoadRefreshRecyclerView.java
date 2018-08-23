@@ -11,11 +11,12 @@ import android.view.View;
 import android.view.ViewGroup;
 
 /**
- * Created by FrankChoo on 2017/10/11.
- * Email: frankchoochina@gmail.com
- * Description:
  * 支持上拉加载更多的 RecyclerView, 用户通过 addLoadViewCreator() 方法自定义上拉加载效果
  * 继承了 RefreshRecyclerView: 下拉刷新, 添加 Header 和 Footer 的功能
+ *
+ * @author Frank <a href="frankchoochina@gmail.com">Contact me.</a>
+ * @version 1.0
+ * @since 2018/8/23 9:30
  */
 public class LoadRefreshRecyclerView extends RefreshRecyclerView {
 

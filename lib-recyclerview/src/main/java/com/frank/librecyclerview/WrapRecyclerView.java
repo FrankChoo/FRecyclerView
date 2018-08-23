@@ -10,11 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by FrankChoo on 2017/10/11.
- * Email: frankchoochina@gmail.com
- * Description:
  * 1. 添加Header和Footer
  * 2. 添加空数据显示的View
+ *
+ * @author Frank <a href="frankchoochina@gmail.com">Contact me.</a>
+ * @version 1.0
+ * @since 2017/10/11.
  */
 public class WrapRecyclerView extends RecyclerView {
 

@@ -10,13 +10,9 @@ import android.view.ViewGroup;
 import java.util.List;
 
 /**
- * Created by FrankChoo on 2017/10/11.
- * Email: frankchoochina@gmail.com
- * Version: 2.0
- * Description: 通用的 RecyclerViewAdapter
+ * 通用的 RecyclerViewAdapter
  * <p>
  * 1. 子类需要复写 getLayoutRes 方法, 根据 当前位置的数据 或者 直接根据位置 来返回不同的布局文件
- *
  * @see #getLayoutRes
  * <p>
  * 2. 子类需要复写 convert 方法, 用于绑定数据, holder中封装了开发时常用的方法
@@ -33,6 +29,10 @@ import java.util.List;
  * step2: 复写 onItemChildClick/onItemChildLongClick
  * @see #onItemChildClick
  * @see #onItemChildLongClick
+ *
+ * @author Frank <a href="xiaoyu.zhu@1hai.cn">Contact me.</a>
+ * @version 1.0
+ * @since 2017/10/11 9:30
  */
 public abstract class CommonRecyclerAdapter<T> extends RecyclerView.Adapter<CommonViewHolder>
         implements CommonViewHolder.OnItemClickInteraction {

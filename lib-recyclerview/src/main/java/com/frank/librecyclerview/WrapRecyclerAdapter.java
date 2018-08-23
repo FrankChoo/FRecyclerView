@@ -9,11 +9,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 /**
- * Created by FrankChoo on 2017/10/11.
- * Email: frankchoochina@gmail.com
- * Description:
+ * 包级可用
  * 1. 采用装饰设计模式
  * 2. 在构造函数中传入 Adapter 即可对用户自己创建的 Adapter 进行拓展
+ *
+ * @author Frank <a href="frankchoochina@gmail.com">Contact me.</a>
+ * @version 1.0
+ * @since 2018/8/23 9:32
  */
 class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 

@@ -5,9 +5,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 /**
- * Created by FrankChoo on 2017/10/11.
- * Email: frankchoochina@gmail.com
- * Description: 用于下拉刷新的 View
+ * 用于下拉刷新的 ViewCreator
+ *
+ * @author Frank <a href="frankchoochina@gmail.com">Contact me.</a>
+ * @version 1.0
+ * @since 2017/10/11
  */
 public interface RefreshViewCreator {
 

@@ -13,12 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Email: frankchoochina@gmail.com
- * Created by FrankChoo on 2017/10/11.
- * Version: 2.0
- * Description: 封装好的 ViewHolder
+ * 封装好的 ViewHolder
  * 1. 设置常规 View 的一些属性
  * 2. 图片加载需要第三方自行实现
+ *
+ * @author Frank <a href="frankchoochina@gmail.com">Contact me.</a>
+ * @version 1.0
+ * @since 2017/10/11
  */
 public class CommonViewHolder extends RecyclerView.ViewHolder {
 
