@@ -17,7 +17,7 @@ import java.util.List;
  * @version 1.0
  * @since 2017/10/11.
  */
-public class WrapRecyclerView extends RecyclerView {
+class WrapRecyclerView extends RecyclerView {
 
     private Adapter mOriginAdapter;
     private WrapRecyclerAdapter mWrapAdapter;

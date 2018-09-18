@@ -16,11 +16,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun initView() {
         recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = TestAdapter(this, arrayListOf("1", "2", "3",
+        recyclerView.adapter = SampleAdapter(this, arrayListOf("1", "2", "3",
                 "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"))
 
         // 添加下拉刷新
-        recyclerView.addRefreshViewCreator(TestRefreshView())
+        recyclerView.addRefreshViewCreator(SampleRefreshView())
         // 触发下拉刷新的回调
         recyclerView.setOnRefreshListener {
             recyclerView.postDelayed({
@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         recyclerView.addFooterView(footerView)
 
         // 添加上拉加载
-        recyclerView.addLoadViewCreator(TestLoadView())
+        recyclerView.addLoadViewCreator(SampleLoadView())
         // 触发上拉加载的回调
         recyclerView.setOnLoadMoreListener {
             recyclerView.postDelayed({

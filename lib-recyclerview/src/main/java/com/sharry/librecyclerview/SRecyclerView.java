@@ -18,7 +18,7 @@ import android.view.ViewGroup;
  * @version 1.0
  * @since 2018/8/23 9:30
  */
-public class LoadRefreshRecyclerView extends RefreshRecyclerView {
+public class SRecyclerView extends RefreshWrapperRecyclerView {
 
     public static int LOAD_STATUS_PULL_UP_LOADING = 0x00022;// 上拉加载更多状态
     public static int LOAD_STATUS_LOOSEN_LOADING = 0x00033;// 松开加载更多状态
@@ -34,15 +34,15 @@ public class LoadRefreshRecyclerView extends RefreshRecyclerView {
     // 处理加载更多回调监听
     private OnLoadMoreListener mListener;
 
-    public LoadRefreshRecyclerView(Context context) {
+    public SRecyclerView(Context context) {
         super(context);
     }
 
-    public LoadRefreshRecyclerView(Context context, @Nullable AttributeSet attrs) {
+    public SRecyclerView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public LoadRefreshRecyclerView(Context context, @Nullable AttributeSet attrs, int defStyle) {
+    public SRecyclerView(Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
@@ -239,4 +239,5 @@ public class LoadRefreshRecyclerView extends RefreshRecyclerView {
     public interface OnLoadMoreListener {
         void onLoad();
     }
+
 }

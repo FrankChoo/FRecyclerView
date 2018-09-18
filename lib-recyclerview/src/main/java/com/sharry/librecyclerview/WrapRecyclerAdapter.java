@@ -90,7 +90,6 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
     };
 
-
     public WrapRecyclerAdapter(RecyclerView.Adapter adapter) {
         mHeaderViews = new SparseArray<>();
         mFooterViews = new SparseArray<>();

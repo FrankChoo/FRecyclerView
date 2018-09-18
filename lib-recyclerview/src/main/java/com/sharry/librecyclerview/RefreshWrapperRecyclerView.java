@@ -19,9 +19,9 @@ import android.view.ViewGroup;
  * @version 1.0
  * @since 2017/10/11.
  */
-public class RefreshRecyclerView extends WrapRecyclerView {
+class RefreshWrapperRecyclerView extends WrapRecyclerView {
 
-    protected float mDragIndex = 0.35f; // 手指拖拽的阻力指数
+    protected float mDragIndex = 0.3f; // 手指拖拽的阻力指数
     // 当前刷新的状态
     private int mCurrentRefreshStatus;
     private int REFRESH_STATUS_NORMAL = 0x0011;// 默认状态
@@ -37,15 +37,15 @@ public class RefreshRecyclerView extends WrapRecyclerView {
     // 处理刷新回调监听
     private OnRefreshListener mListener;
 
-    public RefreshRecyclerView(Context context) {
+    public RefreshWrapperRecyclerView(Context context) {
         super(context);
     }
 
-    public RefreshRecyclerView(Context context, @Nullable AttributeSet attrs) {
+    public RefreshWrapperRecyclerView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public RefreshRecyclerView(Context context, @Nullable AttributeSet attrs, int defStyle) {
+    public RefreshWrapperRecyclerView(Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
@@ -119,7 +119,7 @@ public class RefreshRecyclerView extends WrapRecyclerView {
                 }
                 // 获取手指触摸拖拽的距离
                 int distanceY = (int) ((e.getRawY() - mFingerDownY) * mDragIndex);
-                // 如果是已经到达头部，并且不断的向下拉，那么不断的改变refreshView的marginTop的值
+                // 如果是已经到达头部，并且不断的向下拉，那么不断的改变 refreshView 的 marginTop 的值
                 if (distanceY > 0) {
                     int marginTop = distanceY - mRefreshViewHeight;
                     setRefreshViewMarginTop(marginTop);

@@ -21,7 +21,7 @@ import java.util.List;
  * @version 1.0
  * @since 2017/10/11
  */
-public class CommonViewHolder extends RecyclerView.ViewHolder {
+public class SViewHolder extends RecyclerView.ViewHolder {
 
     private static final int INVALIDATE_VIEW_TYPE = -1;
 
@@ -38,7 +38,7 @@ public class CommonViewHolder extends RecyclerView.ViewHolder {
     // 用于与 Adapter 之间进行交互
     private OnItemClickInteraction mClickInteraction;
 
-    public CommonViewHolder(View itemView, int viewType, OnItemClickInteraction interaction) {
+    public SViewHolder(View itemView, int viewType, OnItemClickInteraction interaction) {
         super(itemView);
         bindItemViewListener(itemView);
         mViewType = viewType;
@@ -70,7 +70,7 @@ public class CommonViewHolder extends RecyclerView.ViewHolder {
     /**
      * 设置 View 的 Visibility
      */
-    public CommonViewHolder setViewVisibility(int viewId, int visibility) {
+    public SViewHolder setViewVisibility(int viewId, int visibility) {
         getView(viewId).setVisibility(visibility);
         return this;
     }
@@ -78,7 +78,7 @@ public class CommonViewHolder extends RecyclerView.ViewHolder {
     /**
      * 设置 TextView 文本
      */
-    public CommonViewHolder setText(int viewId, CharSequence text) {
+    public SViewHolder setText(int viewId, CharSequence text) {
         TextView tv = getView(viewId);
         tv.setText(text);
         return this;
@@ -87,7 +87,7 @@ public class CommonViewHolder extends RecyclerView.ViewHolder {
     /**
      * 设置 ImageView 的资源文件
      */
-    public CommonViewHolder setImageResource(int viewId, @DrawableRes int drawableRes) {
+    public SViewHolder setImageResource(int viewId, @DrawableRes int drawableRes) {
         ImageView imageView = getView(viewId);
         imageView.setImageResource(drawableRes);
         return this;
@@ -96,10 +96,10 @@ public class CommonViewHolder extends RecyclerView.ViewHolder {
     /**
      * 设置图片通过路径, 用户自行实现加载逻辑
      */
-    public CommonViewHolder setImageUri(int viewId, String uri, HolderImageLoader imageLoader) {
+    public SViewHolder setImageUri(int viewId, String uri, HolderImageLoader imageLoader) {
         ImageView imageView = getView(viewId);
         if (imageLoader == null) {
-            throw new NullPointerException("CommonViewHolder.setImageUri -> parameter imageLoader must not be null!");
+            throw new NullPointerException("SViewHolder.setImageUri -> parameter imageLoader must not be null!");
         }
         imageLoader.displayImage(imageView.getContext(), uri, imageView);
         return this;
@@ -110,7 +110,7 @@ public class CommonViewHolder extends RecyclerView.ViewHolder {
      * <p>
      * 添加子 View 点击事件
      */
-    public CommonViewHolder addClickListener(int viewId) {
+    public SViewHolder addClickListener(int viewId) {
         if (!mClickIds.contains(viewId)) {
             mClickIds.add(viewId);
             getView(viewId).setOnClickListener(new View.OnClickListener() {
@@ -127,7 +127,7 @@ public class CommonViewHolder extends RecyclerView.ViewHolder {
     /**
      * 添加子 View 长按事件
      */
-    public CommonViewHolder addLongClickListener(int viewId) {
+    public SViewHolder addLongClickListener(int viewId) {
         if (!mLongClickIds.contains(viewId)) {
             mLongClickIds.add(viewId);
             getView(viewId).setOnLongClickListener(new View.OnLongClickListener() {

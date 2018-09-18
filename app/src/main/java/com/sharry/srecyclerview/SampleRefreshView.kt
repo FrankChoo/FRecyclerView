@@ -15,7 +15,7 @@ import com.sharry.librecyclerview.RefreshViewCreator
  * Version: 1.0
  * Description:
  */
-class TestRefreshView : RefreshViewCreator {
+class SampleRefreshView : RefreshViewCreator {
 
     private lateinit var mTvRefresh: TextView
     private lateinit var mIvRefresh: ImageView
