@@ -10,7 +10,7 @@ import android.widget.TextView
 import com.sharry.librecyclerview.RefreshViewCreator
 
 /**
- * Created by Frank on 2018/8/3.
+ * Created by Sharry on 2018/8/3.
  * Email: SharryChooCHN@Gmail.com
  * Version: 1.0
  * Description:

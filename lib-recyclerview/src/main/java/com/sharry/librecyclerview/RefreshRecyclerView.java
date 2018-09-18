@@ -15,7 +15,7 @@ import android.view.ViewGroup;
  * 支持侧滑删除与长按拖动
  * 继承了WrapRecyclerView: 添加Header和Footer的功能
  *
- * @author Frank <a href="SharryChooCHN@Gmail.com">Contact me.</a>
+ * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
  * @version 1.0
  * @since 2017/10/11.
  */

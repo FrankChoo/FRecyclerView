@@ -13,7 +13,7 @@ import android.view.ViewGroup;
  * 1. 采用装饰设计模式
  * 2. 在构造函数中传入 Adapter 即可对用户自己创建的 Adapter 进行拓展
  *
- * @author Frank <a href="SharryChooCHN@Gmail.com">Contact me.</a>
+ * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
  * @version 1.0
  * @since 2018/8/23 9:32
  */

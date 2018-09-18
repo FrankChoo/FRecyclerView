@@ -30,7 +30,7 @@ import java.util.List;
  * @see #onItemChildClick
  * @see #onItemChildLongClick
  *
- * @author Frank <a href="SharryChooCHN@Gmail.com">Contact me.</a>
+ * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
  * @version 1.0
  * @since 2017/10/11 9:30
  */

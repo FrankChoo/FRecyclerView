@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 /**
  * 用于下拉刷新的 ViewCreator
  *
- * @author Frank <a href="SharryChooCHN@Gmail.com">Contact me.</a>
+ * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
  * @version 1.0
  * @since 2017/10/11
  */

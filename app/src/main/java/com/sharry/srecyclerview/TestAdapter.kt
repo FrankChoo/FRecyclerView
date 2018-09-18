@@ -7,7 +7,7 @@ import com.sharry.librecyclerview.CommonRecyclerAdapter
 import com.sharry.librecyclerview.CommonViewHolder
 
 /**
- * Created by Frank on 2018/8/3.
+ * Created by Sharry on 2018/8/3.
  * Email: SharryChooCHN@Gmail.com
  * Version: 1.0
  * Description:

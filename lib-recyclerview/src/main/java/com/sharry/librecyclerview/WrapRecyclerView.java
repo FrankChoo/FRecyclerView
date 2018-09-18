@@ -13,7 +13,7 @@ import java.util.List;
  * 1. 添加Header和Footer
  * 2. 添加空数据显示的View
  *
- * @author Frank <a href="SharryChooCHN@Gmail.com">Contact me.</a>
+ * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
  * @version 1.0
  * @since 2017/10/11.
  */

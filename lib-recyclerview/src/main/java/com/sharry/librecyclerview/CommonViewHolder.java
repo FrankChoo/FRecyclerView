@@ -17,7 +17,7 @@ import java.util.List;
  * 1. 设置常规 View 的一些属性
  * 2. 图片加载需要第三方自行实现
  *
- * @author Frank <a href="SharryChooCHN@Gmail.com">Contact me.</a>
+ * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
  * @version 1.0
  * @since 2017/10/11
  */
