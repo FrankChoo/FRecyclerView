@@ -13,8 +13,8 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    api "androidx.appcompat:appcompat:$supportLibraryVersion"
-    api "androidx.recyclerview:recyclerview:$supportLibraryVersion"
+    implementation "androidx.appcompat:appcompat:$supportLibraryVersion"
+    implementation "androidx.recyclerview:recyclerview:$supportLibraryVersion"
 }
 
 

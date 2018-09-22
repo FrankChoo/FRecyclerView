@@ -14,7 +14,7 @@ android {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
-    api "androidx.appcompat:appcompat:$supportLibraryVersion"
-    api "androidx.recyclerview:recyclerview:$supportLibraryVersion"
+    implementation "androidx.appcompat:appcompat:$supportLibraryVersion"
+    implementation "androidx.recyclerview:recyclerview:$supportLibraryVersion"
     implementation project(':lib-recyclerview')
 }
