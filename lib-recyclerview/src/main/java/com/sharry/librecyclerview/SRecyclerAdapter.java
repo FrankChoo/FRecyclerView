@@ -1,18 +1,22 @@
 package com.sharry.librecyclerview;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
 /**
  * 通用的 RecyclerViewAdapter
  * <p>
  * 1. 子类需要复写 getLayoutResId 方法, 根据 当前位置的数据 或者 直接根据位置 来返回不同的布局文件
+ *
+ * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
+ * @version 1.0
  * @see #getLayoutResId
  * <p>
  * 2. 子类需要复写 convert 方法, 用于绑定数据, holder中封装了开发时常用的方法
@@ -29,9 +33,6 @@ import java.util.List;
  * step2: 复写 onItemChildClick/onItemChildLongClick
  * @see #onItemChildClick
  * @see #onItemChildLongClick
- *
- * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
- * @version 1.0
  * @since 2017/10/11 9:30
  */
 public abstract class SRecyclerAdapter<T> extends RecyclerView.Adapter<SViewHolder>

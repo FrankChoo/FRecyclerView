@@ -3,12 +3,13 @@ package com.sharry.librecyclerview;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.support.annotation.Nullable;
-import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
 
 /**
  * 支持下拉刷新的View, 通过通过addRefreshViewCreator()去自定义下拉刷新效果
