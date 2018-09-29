@@ -13,7 +13,7 @@ import com.sharry.librecyclerview.LoadViewCreator
  * Version: 1.0
  * Description: 测试用的上拉加载的 Creator
  */
-class SampleLoadView : LoadViewCreator {
+class SampleLoadViewCreator : LoadViewCreator {
 
     private lateinit var mTvItemLoad: TextView
 

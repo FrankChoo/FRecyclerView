@@ -3,6 +3,7 @@ package com.sharry.librecyclerview;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -12,7 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 
 /**
- * 支持上拉加载更多的 RecyclerView, 用户通过 addLoadViewCreator() 方法自定义上拉加载效果
+ * 支持上拉加载更多的 RecyclerView, 用户通过 setLoadViewCreator() 方法自定义上拉加载效果
  * 继承了 RefreshRecyclerView: 下拉刷新, 添加 Header 和 Footer 的功能
  *
  * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
@@ -21,19 +22,26 @@ import androidx.core.view.ViewCompat;
  */
 public class SRecyclerView extends RefreshWrapperRecyclerView {
 
-    public static int LOAD_STATUS_PULL_UP_LOADING = 0x00022;// 上拉加载更多状态
-    public static int LOAD_STATUS_LOOSEN_LOADING = 0x00033;// 松开加载更多状态
-    public int LOAD_STATUS_NORMAL = 0x00011;// 默认状态
-    public int LOAD_STATUS_LOADING = 0x0044;// 正在加载更多状态
-    // 当前的状态
-    private int mCurrentLoadStatus;
-    private LoadViewCreator mLoadCreator; // 上拉加载更多的辅助类
-    private int mLoadViewHeight = 0;// 上拉加载更多头部的高度
-    private View mLoadView;// 上拉加载更多的头部View
-    private int mFingerDownY;// 手指按下的Y位置
-    private boolean mCurrentDrag = false;// 当前是否正在拖动
-    // 处理加载更多回调监听
-    private OnLoadMoreListener mListener;
+    private static final int LOAD_STATUS_NORMAL = 14;
+    private static final int LOAD_STATUS_PULL_UP_LOADING = 47;
+    private static final int LOAD_STATUS_LOOSEN_LOADING = 480;
+    private static final int LOAD_STATUS_LOADING = 799;
+
+    private LoadViewCreator mLoadCreator = null;                                // 上拉加载更多的辅助类
+    private OnLoadMoreListener mListener = null;                                // 上拉加载更多的触发时的回调
+    private View mLoadView = null;                                              // 上拉加载更多的头部View
+    private int mCurrentLoadStatus = LOAD_STATUS_NORMAL;                        // 当前的状态
+    private int mLoadViewHeight = 0;                                            // 上拉加载更多头部的高度
+    /*
+      拖拽相关成员变量
+     */
+    private int mDistanceY = 0;                                                  // 当前拖拽的距离
+    private int mPrevDragDistance = 0;                                           // 未换手之前的已经拖拽的距离
+    private float mDragIndex = 0.3f;                                             // 手指拖拽阻尼系数
+    private float mDragContrastY = 0f;                                           // 拖拽的基准位置
+    private int mSwitchFingerCountInDragging = 0;                                // 记录手指切换次数
+    private boolean mIsEdgeDragging = false;                                     // 是否正在进行边缘拖拽
+    private boolean mIsSwitchOtherFinder = false;                                // 是否发生了手指切换
 
     public SRecyclerView(Context context) {
         super(context);
@@ -47,29 +55,42 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         super(context, attrs, defStyle);
     }
 
+    public interface OnLoadMoreListener {
+        void onLoadMore();
+    }
+
+    /**
+     * 设置触发上拉加载更多的回调
+     */
+    public void setOnLoadMoreListener(OnLoadMoreListener listener) {
+        this.mListener = listener;
+    }
+
     /**
      * 暴露给外界添加上拉加载View的Creator
      */
-    public void addLoadViewCreator(LoadViewCreator loadCreator) {
-        if (loadCreator == null) return;
+    public void setLoadViewCreator(LoadViewCreator loadCreator) {
+        if (null == loadCreator) {
+            throw new NullPointerException("Please ensure parameter loadCreator NonNull.");
+        }
         mLoadCreator = loadCreator;
         // 添加头部的刷新View
         View loadView = mLoadCreator.getLoadView(getContext(), this);
-        if (loadView != null) {
+        if (null == loadView) {
+            throw new NullPointerException("Please ensure " + loadCreator + ".getLoadView() return NonNull.");
+        } else {
             mLoadView = loadView;
             addFooterView(mLoadView);
-        } else {
-            throw new RuntimeException("上拉加载的 View 不能为 null");
         }
     }
 
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
         super.onMeasure(widthSpec, heightSpec);
-        // 为了防止RecyclerView的Measure机制导致我们最底部的LoadView不给予测量
-        // 自行测量LoadView的高度
+        // 为了防止 RecyclerView 的 Measure机制导致我们最底部的LoadView不给予测量
+        // 自行测量 LoadView 的高度
         if (mLoadView != null && mLoadViewHeight == 0) {
-            // 这里要求LoadView的高度必须是精确值
+            // 这里要求 LoadView 的高度必须是精确值
             ViewGroup.LayoutParams params = mLoadView.getLayoutParams();
             int loadViewHeightSpec;
             if (params.height == ViewGroup.LayoutParams.WRAP_CONTENT) {
@@ -90,11 +111,31 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        switch (ev.getAction()) {
-            // 记录手指按下的位置 ,之所以写在dispatchTouchEvent那是因为如果我们处理了条目点击事件，
-            // 那么就不会进入onTouchEvent里面，所以只能在这里获取
+        switch (ev.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
-                mFingerDownY = (int) ev.getRawY();
+                // 记录手指按下的位置, 之所以写在 dispatchTouchEvent 那是因为如果我们处理了条目点击事件，
+                // 那么就不会进入 onTouchEvent 里面，所以只能在这里获取
+                mDragContrastY = ev.getRawY();
+                mPrevDragDistance = 0;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (mIsSwitchOtherFinder) {
+                    mPrevDragDistance = mDistanceY;
+                    mDragContrastY = ev.getRawY();
+                    mIsSwitchOtherFinder = false;
+                }
+                break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                // 当手指切换次数为奇数时, 此时这个触摸会获取 move 执行焦点
+                if (mSwitchFingerCountInDragging % 2 == 1) {
+                    mDragContrastY = ev.getRawY();
+                    mPrevDragDistance = mDistanceY;
+                }
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                // 说明出现了中途切换手指的情况
+                mSwitchFingerCountInDragging++;
+                mIsSwitchOtherFinder = true;
                 break;
         }
         return super.dispatchTouchEvent(ev);
@@ -105,30 +146,34 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         switch (e.getAction()) {
             case MotionEvent.ACTION_MOVE: {
                 // 如果是在最底部才处理，否则不需要处理
-                if (canScrollDown() || mCurrentLoadStatus == LOAD_STATUS_LOADING
-                        || mLoadCreator == null || mLoadView == null) {
+                if (canScrollDown() || LOAD_STATUS_LOADING == mCurrentLoadStatus ||
+                        null == mLoadCreator || null == mLoadView) {
                     // 如果没有到达最顶端，也就是说还可以向上滚动就什么都不处理
                     return super.onTouchEvent(e);
                 }
-                // 解决上拉加载更多自动滚动问题, 上拉加载的时候将RecyclerView锁定在最后一行
-                if (mCurrentDrag) {
+                // 解决上拉加载更多自动滚动问题, 上拉加载的时候将 RecyclerView 锁定在最后一行
+                if (mIsEdgeDragging) {
                     scrollToPosition(getAdapter().getItemCount() - 1);
                 }
                 // 获取手指触摸拖拽的距离
-                int distanceY = (int) ((e.getRawY() - mFingerDownY) * mDragIndex);
+                mDistanceY = mPrevDragDistance + (int) ((e.getRawY() - mDragContrastY) * mDragIndex);
                 // 如果是已经到达底部，并且不断的向上拉，那么不断的改变loadView的marginBottom的值
-                if (distanceY < 0) {
-                    int marginBottom = -distanceY - mLoadViewHeight;
+                if (mDistanceY < 0) {
+                    mIsEdgeDragging = true;
+                    int marginBottom = -mDistanceY - mLoadViewHeight;
                     setLoadViewMarginBottom(marginBottom);
-                    updateLoadStatus(-distanceY);
-                    mCurrentDrag = true;
+                    updateLoadStatus(-mDistanceY);
                     return true;
                 }
                 break;
             }
             case MotionEvent.ACTION_UP: {
-                if (mCurrentDrag) {
+                if (mIsEdgeDragging) {
                     restoreLoadView();
+                    mDistanceY = 0;
+                    mDragContrastY = 0;
+                    mSwitchFingerCountInDragging = 0;
+                    mIsEdgeDragging = false;
                 }
                 break;
             }
@@ -169,7 +214,7 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
                 mLoadCreator.onLoading(mLoadView);
             }
             if (mListener != null) {
-                mListener.onLoad();
+                mListener.onLoadMore();
             }
         }
         // 回弹到指定位置
@@ -183,7 +228,6 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
             }
         });
         animator.start();
-        mCurrentDrag = false;
     }
 
     /**
@@ -196,19 +240,6 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         }
         params.bottomMargin = marginBottom;
         mLoadView.setLayoutParams(params);
-    }
-
-    /**
-     * @return Whether it is possible for the child view of this layout to
-     * scroll up. Override this if the child view is a custom view.
-     * 判断是不是滚动到了最顶部，这个是从SwipeRefreshLayout里面copy过来的源代码
-     */
-    public boolean canScrollDown() {
-        if (android.os.Build.VERSION.SDK_INT < 14) {
-            return ViewCompat.canScrollVertically(this, 1) || this.getScrollY() < 0;
-        } else {
-            return ViewCompat.canScrollVertically(this, 1);
-        }
     }
 
     /**
@@ -233,12 +264,17 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         }
     }
 
-    public void setOnLoadMoreListener(OnLoadMoreListener listener) {
-        this.mListener = listener;
-    }
-
-    public interface OnLoadMoreListener {
-        void onLoad();
+    /**
+     * @return Whether it is possible for the child view of this layout to
+     * scroll up. Override this if the child view is a custom view.
+     * 判断是不是滚动到了最顶部，这个是从SwipeRefreshLayout里面copy过来的源代码
+     */
+    private boolean canScrollDown() {
+        if (Build.VERSION.SDK_INT < 14) {
+            return ViewCompat.canScrollVertically(this, 1) || this.getScrollY() < 0;
+        } else {
+            return ViewCompat.canScrollVertically(this, 1);
+        }
     }
 
 }
