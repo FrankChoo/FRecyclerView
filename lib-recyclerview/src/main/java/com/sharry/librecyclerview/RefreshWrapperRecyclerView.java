@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
 
 /**
  * 支持下拉刷新的View, 通过通过addRefreshViewCreator()去自定义下拉刷新效果
@@ -22,21 +21,26 @@ import androidx.core.view.ViewCompat;
  */
 class RefreshWrapperRecyclerView extends WrapRecyclerView {
 
-    protected float mDragIndex = 0.3f; // 手指拖拽的阻力指数
-    // 当前刷新的状态
-    private int mCurrentRefreshStatus;
-    private int REFRESH_STATUS_NORMAL = 0x0011;// 默认状态
-    private int REFRESH_STATUS_PULL_DOWN_REFRESH = 0x0022;// 下拉刷新状态
-    private int REFRESH_STATUS_LOOSEN_REFRESHING = 0x0033;// 松开刷新状态
-    private int REFRESH_STATUS_REFRESHING = 0x0044;// 正在刷新状态
-    // 下拉刷新的辅助类
-    private RefreshViewCreator mRefreshCreator;
-    private int mRefreshViewHeight = 0; // 下拉刷新头部的高度
-    private View mRefreshView; // 下拉刷新的头部View
-    private int mFingerDownY;// 手指按下的Y位置
-    private boolean mCurrentDrag = false; // 当前是否正在拖动
-    // 处理刷新回调监听
-    private OnRefreshListener mListener;
+    /*
+      Constants
+     */
+    private static final int REFRESH_STATUS_NORMAL = 795;
+    private static final int REFRESH_STATUS_PULL_DOWN_REFRESH = 746;
+    private static final int REFRESH_STATUS_LOOSEN_REFRESHING = 107;
+    private static final int REFRESH_STATUS_REFRESHING = 272;
+
+    /*
+      Fields
+     */
+    private RefreshViewCreator mRefreshCreator;   // 下拉刷新视图的构造者
+    private View mRefreshView;                    // 下拉刷新的头部View
+    private OnRefreshListener mListener;          // 处理刷新回调监听
+    private int mCurrentRefreshStatus;            // 当前下拉刷新的状态
+    protected float mDragIndex = 0.3f;            // 手指拖拽阻尼系数
+    private int mRefreshViewHeight = 0;           // 下拉刷新头部的高度
+    private int mFingerDownY;                     // 手指按下的Y位置
+    private boolean mIsRefreshDragging = false;   // 是否正在进行下拉刷新的拖拽
+    private int mCurrentTouchTarget = 0;          // 记录当前 RecyclerView 正在处理的触摸事件序列
 
     public RefreshWrapperRecyclerView(Context context) {
         super(context);
@@ -50,29 +54,40 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
         super(context, attrs, defStyle);
     }
 
+
+    public interface OnRefreshListener {
+        void onRefresh();
+    }
+
     /**
      * 添加头部的刷新View
      */
     public void addRefreshViewCreator(RefreshViewCreator refreshCreator) {
-        if (refreshCreator == null) return;
+        if (refreshCreator == null) {
+            return;
+        }
         mRefreshCreator = refreshCreator;
-        // 添加头部的刷新View
+        // 添加头部的刷新 View
         View refreshView = mRefreshCreator.getRefreshView(getContext(), this);
         if (refreshView != null) {
             mRefreshView = refreshView;
             addHeaderView(mRefreshView);
         } else {
-            throw new RuntimeException("下拉刷新的View不能为null");
+            throw new RuntimeException("下拉刷新的 View 不能为 null.");
         }
+    }
+
+    public void setOnRefreshListener(OnRefreshListener listener) {
+        this.mListener = listener;
     }
 
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
         super.onMeasure(widthSpec, heightSpec);
-        // 按照常理RefreshView因为在顶部, 所以刚进入界面时一定会给予测量的
-        // 但是这里与LoadView的写法保持一致,自行测量RefreshView的高度
+        // 按照常理 RefreshView 因为在顶部, 所以刚进入界面时一定会给予测量的
+        // 但是这里与 LoadView 的写法保持一致, 自行测量 RefreshView 的高度
         if (mRefreshView != null && mRefreshViewHeight == 0) {
-            // 这里要求RefreshView的高度必须是精确值
+            // 这里要求 RefreshView 的高度必须是精确值
             ViewGroup.LayoutParams params = mRefreshView.getLayoutParams();
             int refreshViewHeightSpec;
             if (params.height == ViewGroup.LayoutParams.WRAP_CONTENT) {
@@ -80,14 +95,14 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
             } else if (params.height != ViewGroup.LayoutParams.MATCH_PARENT) {
                 refreshViewHeightSpec = View.MeasureSpec.makeMeasureSpec(params.height, View.MeasureSpec.EXACTLY);
             } else {
-                throw new RuntimeException("RefreshView的高度不能指定为Match_Parent");
+                throw new RuntimeException("RefreshView 的高度不能指定为 Match_Parent");
             }
             mRefreshView.measure(widthSpec, refreshViewHeightSpec);
-            // 获取头部刷新View的高度
+            // 获取头部刷新 View 的高度
             mRefreshViewHeight = mRefreshView.getMeasuredHeight();
             if (mRefreshViewHeight > 0) {
-                // 隐藏头部刷新的View  marginTop  多留出1px防止无法判断是不是滚动到头部问题
-                setRefreshViewMarginTop(-mRefreshViewHeight + 1);
+                // 隐藏头部刷新的 View marginTop 多留出 1px 防止无法判断是不是滚动到头部问题
+                setRefreshViewMarginTop(1 - mRefreshViewHeight);
             }
         }
     }
@@ -96,9 +111,15 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
     public boolean dispatchTouchEvent(MotionEvent ev) {
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                // 记录手指按下的位置 ,之所以写在dispatchTouchEvent那是因为如果我们处理了条目点击事件，
-                // 那么就不会进入onTouchEvent里面，所以只能在这里获取
-                mFingerDownY = (int) ev.getRawY();
+                // 记录手指按下的位置, 之所以写在 dispatchTouchEvent 那是因为如果我们处理了条目点击事件，
+                // 那么就不会进入 onTouchEvent 里面，所以只能在这里获取
+                if (mCurrentTouchTarget++ == 0) {
+                    mFingerDownY = (int) ev.getRawY();
+                }
+                break;
+            case MotionEvent.ACTION_CANCEL:
+            case MotionEvent.ACTION_UP:
+                --mCurrentTouchTarget;
                 break;
         }
         return super.dispatchTouchEvent(ev);
@@ -108,36 +129,36 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
     public boolean onTouchEvent(MotionEvent e) {
         switch (e.getAction()) {
             case MotionEvent.ACTION_MOVE: {
-                // 如果是在最顶部才处理，否则不需要处理
-                if (canScrollUp() || mCurrentRefreshStatus == REFRESH_STATUS_REFRESHING
-                        || mRefreshView == null || mRefreshCreator == null) {
-                    // 如果没有到达最顶端，也就是说还可以向上滚动就什么都不处理
+                // 若不满足下拉刷新的条件则, 直接回调父类方法
+                if (canScrollUp() || REFRESH_STATUS_REFRESHING == mCurrentRefreshStatus
+                        || null == mRefreshCreator || null == mRefreshView) {
                     return super.onTouchEvent(e);
                 }
-                // 解决下拉刷新自动滚动问题, 下拉刷新的时候将RecyclerView锁定在最后一行
-                if (mCurrentDrag) {
+                // 下拉刷新的时候将 RecyclerView 锁定在第一个 item 的位置
+                if (mIsRefreshDragging) {
                     scrollToPosition(0);
                 }
                 // 获取手指触摸拖拽的距离
                 int distanceY = (int) ((e.getRawY() - mFingerDownY) * mDragIndex);
                 // 如果是已经到达头部，并且不断的向下拉，那么不断的改变 refreshView 的 marginTop 的值
                 if (distanceY > 0) {
+                    mIsRefreshDragging = true;
                     int marginTop = distanceY - mRefreshViewHeight;
                     setRefreshViewMarginTop(marginTop);
                     updateRefreshStatus(distanceY);
-                    mCurrentDrag = true;
                     return true;
                 }
                 break;
             }
             case MotionEvent.ACTION_UP: {
-                if (mCurrentDrag) {
+                // 若没有手指在拖拽, 则进行释放
+                if (mIsRefreshDragging) {
                     restoreRefreshView();
+                    mIsRefreshDragging = false;
                 }
                 break;
             }
         }
-
         return super.onTouchEvent(e);
     }
 
@@ -154,8 +175,7 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
         } else {
             mCurrentRefreshStatus = REFRESH_STATUS_LOOSEN_REFRESHING;
         }
-
-        if (mRefreshCreator != null) {
+        if (null != mRefreshCreator) {
             mRefreshCreator.onPulling(mRefreshView, distanceY, mRefreshViewHeight);
         }
     }
@@ -166,9 +186,11 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
      * 2. 刷新完成后, RefreshView回弹到最终的隐藏位置
      */
     private void restoreRefreshView() {
-        if (mRefreshView == null) return;
+        if (mRefreshView == null) {
+            return;
+        }
         // 指定的最终位置(默认为隐藏的位置)
-        int finalTopMargin = -mRefreshViewHeight + 1;
+        int finalTopMargin = 1 - mRefreshViewHeight;
         // 当前的位置
         int currentTopMargin = ((ViewGroup.MarginLayoutParams) mRefreshView.getLayoutParams()).topMargin;
         // 判断是否满足刷新条件
@@ -193,7 +215,6 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
             }
         });
         animator.start();
-        mCurrentDrag = false;
     }
 
     /**
@@ -232,25 +253,15 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
     /**
      * @return Whether it is possible for the child view of this layout to
      * scroll up. Override this if the child view is a custom view.
-     * 判断是不是滚动到了最顶部，这个是从SwipeRefreshLayout里面copy过来的源代码
+     * 判断是不是滚动到了最顶部，这个是从 SwipeRefreshLayout 里面copy过来的源代码
      */
     private boolean canScrollUp() {
+        return canScrollVertically(-1);/*
         if (android.os.Build.VERSION.SDK_INT < 14) {
             return ViewCompat.canScrollVertically(this, -1) || this.getScrollY() > 0;
         } else {
             return ViewCompat.canScrollVertically(this, -1);
-        }
+        }*/
     }
 
-    public void setOnRefreshListener(OnRefreshListener listener) {
-        this.mListener = listener;
-    }
-
-    public void setItemTouchHelperCallback() {
-
-    }
-
-    public interface OnRefreshListener {
-        void onRefresh();
-    }
 }
