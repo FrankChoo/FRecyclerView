@@ -1,5 +1,7 @@
 package com.sharry.librecyclerview;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -7,6 +9,7 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
 import androidx.annotation.Nullable;
@@ -22,26 +25,30 @@ import androidx.core.view.ViewCompat;
  */
 public class SRecyclerView extends RefreshWrapperRecyclerView {
 
+
+    /*
+      Constant associate with pull up load view status.
+     */
     private static final int LOAD_STATUS_NORMAL = 14;
     private static final int LOAD_STATUS_PULL_UP_LOADING = 47;
     private static final int LOAD_STATUS_LOOSEN_LOADING = 480;
     private static final int LOAD_STATUS_LOADING = 799;
 
     private LoadViewCreator mLoadCreator = null;                                // 上拉加载更多的辅助类
-    private OnLoadMoreListener mListener = null;                                // 上拉加载更多的触发时的回调
+    private OnLoadMoreListener mLoadListener = null;                            // 上拉加载更多的触发时的回调
     private View mLoadView = null;                                              // 上拉加载更多的头部View
     private int mCurrentLoadStatus = LOAD_STATUS_NORMAL;                        // 当前的状态
     private int mLoadViewHeight = 0;                                            // 上拉加载更多头部的高度
     /*
       拖拽相关成员变量
      */
-    private int mDistanceY = 0;                                                  // 当前拖拽的距离
-    private int mPrevDragDistance = 0;                                           // 未换手之前的已经拖拽的距离
-    private float mDragIndex = 0.3f;                                             // 手指拖拽阻尼系数
-    private float mDragContrastY = 0f;                                           // 拖拽的基准位置
-    private int mSwitchFingerCountInDragging = 0;                                // 记录手指切换次数
-    private boolean mIsEdgeDragging = false;                                     // 是否正在进行边缘拖拽
-    private boolean mIsSwitchOtherFinder = false;                                // 是否发生了手指切换
+    private int mDistanceY = 0;                                                   // 当前拖拽的距离
+    private int mPrevDragDistance = 0;                                            // 未换手之前的已经拖拽的距离
+    private float mDragIndex = 0.3f;                                              // 手指拖拽阻尼系数
+    private float mDragContrastY = 0f;                                            // 拖拽的基准位置
+    private float mLastMoveY = 0;                                                 // 记录上一次手指移动的距离
+    private boolean mIsEdgeDragging = false;                                      // 是否正在进行边缘拖拽
+    private boolean mIsPointChanged = false;                                      // 是否发生了手指切换
 
     public SRecyclerView(Context context) {
         super(context);
@@ -55,15 +62,10 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         super(context, attrs, defStyle);
     }
 
+    /* ========================================== 上拉加载更多相关 ==================================================*/
+
     public interface OnLoadMoreListener {
         void onLoadMore();
-    }
-
-    /**
-     * 设置触发上拉加载更多的回调
-     */
-    public void setOnLoadMoreListener(OnLoadMoreListener listener) {
-        this.mListener = listener;
     }
 
     /**
@@ -84,10 +86,38 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         }
     }
 
+    /**
+     * 设置触发上拉加载更多的回调
+     */
+    public void setOnLoadMoreListener(OnLoadMoreListener listener) {
+        this.mLoadListener = listener;
+    }
+
+    /**
+     * 上拉加载完成
+     *
+     * @param result         加载结果
+     * @param disappearDelay 刷新完成后的消失时间(mm)
+     */
+    public void onLoadComplete(CharSequence result, long disappearDelay) {
+        // 只有在加载状态时才执行停止加载
+        if (mCurrentLoadStatus == LOAD_STATUS_LOADING) {
+            if (mLoadCreator != null) {
+                mLoadCreator.onComplete(mLoadView, result);
+            }
+            postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    handleLoadViewRestore();
+                }
+            }, disappearDelay);
+        }
+    }
+
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
         super.onMeasure(widthSpec, heightSpec);
-        // 为了防止 RecyclerView 的 Measure机制导致我们最底部的LoadView不给予测量
+        // 为了防止 RecyclerView 的 Measure机制导致我们最底部的 LoadView 不给予测量
         // 自行测量 LoadView 的高度
         if (mLoadView != null && mLoadViewHeight == 0) {
             // 这里要求 LoadView 的高度必须是精确值
@@ -113,29 +143,31 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
     public boolean dispatchTouchEvent(MotionEvent ev) {
         switch (ev.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
-                // 记录手指按下的位置, 之所以写在 dispatchTouchEvent 那是因为如果我们处理了条目点击事件，
-                // 那么就不会进入 onTouchEvent 里面，所以只能在这里获取
                 mDragContrastY = ev.getRawY();
                 mPrevDragDistance = 0;
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (mIsSwitchOtherFinder) {
+                if (mIsPointChanged) {
+                    // 记录切换焦点之前的距离
                     mPrevDragDistance = mDistanceY;
+                    // 记录新的拖拽基准的位置
                     mDragContrastY = ev.getRawY();
-                    mIsSwitchOtherFinder = false;
-                }
-                break;
-            case MotionEvent.ACTION_POINTER_DOWN:
-                // 当手指切换次数为奇数时, 此时这个触摸会获取 move 执行焦点
-                if (mSwitchFingerCountInDragging % 2 == 1) {
-                    mDragContrastY = ev.getRawY();
-                    mPrevDragDistance = mDistanceY;
+                    mIsPointChanged = false;
+                } else {
+                    float curY = ev.getRawY();
+                    // 未切换 Point 的情况下, 判断是否触发了双触点(此情况与焦点切换一样处理)
+                    if (Math.abs(curY - mLastMoveY) >= ViewConfiguration.get(getContext())
+                            .getScaledDoubleTapSlop()) {
+                        mPrevDragDistance = mDistanceY;
+                        mDragContrastY = curY;
+                    }
+                    mLastMoveY = ev.getRawY();
                 }
                 break;
             case MotionEvent.ACTION_POINTER_UP:
-                // 说明出现了中途切换手指的情况
-                mSwitchFingerCountInDragging++;
-                mIsSwitchOtherFinder = true;
+                mIsPointChanged = true;
+                break;
+            default:
                 break;
         }
         return super.dispatchTouchEvent(ev);
@@ -170,13 +202,12 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
             case MotionEvent.ACTION_UP: {
                 if (mIsEdgeDragging) {
                     restoreLoadView();
-                    mDistanceY = 0;
-                    mDragContrastY = 0;
-                    mSwitchFingerCountInDragging = 0;
                     mIsEdgeDragging = false;
                 }
                 break;
             }
+            default:
+                break;
         }
         return super.onTouchEvent(e);
     }
@@ -200,6 +231,69 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
     }
 
     /**
+     * 处理上拉加载 View 的回弹
+     */
+    private void handleLoadViewRestore() {
+        if (null == mLoadView) {
+            return;
+        }
+        if (LOAD_STATUS_LOOSEN_LOADING == mCurrentLoadStatus) {
+            restoreToLoadPos();
+        } else {
+            restoreToLoadInitPos();
+        }
+    }
+
+    /**
+     * 回弹到加载位置
+     */
+    private void restoreToLoadPos() {
+        mCurrentLoadStatus = LOAD_STATUS_LOADING;
+        if (mLoadCreator != null) {
+            mLoadCreator.onLoading(mLoadView);
+        }
+        if (mLoadListener != null) {
+            mLoadListener.onLoadMore();
+        }
+        // 回弹到指定位置
+        int finalBottomMargin = 0;
+        int currentBottomMargin = ((ViewGroup.MarginLayoutParams) mLoadView.getLayoutParams()).bottomMargin;
+        ValueAnimator animator = ObjectAnimator.ofInt(currentBottomMargin, finalBottomMargin)
+                .setDuration(Math.abs(currentBottomMargin - finalBottomMargin));
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                setLoadViewMarginBottom((int) animation.getAnimatedValue());
+            }
+        });
+        animator.start();
+    }
+
+    /**
+     * 回弹到初始位置
+     */
+    private void restoreToLoadInitPos() {
+        // 回弹到指定位置
+        int finalBottomMargin = 1 - mLoadViewHeight;
+        int currentBottomMargin = ((ViewGroup.MarginLayoutParams) mLoadView.getLayoutParams()).bottomMargin;
+        ValueAnimator animator = ObjectAnimator.ofInt(currentBottomMargin, finalBottomMargin)
+                .setDuration(Math.abs(currentBottomMargin - finalBottomMargin));
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                setLoadViewMarginBottom((int) animation.getAnimatedValue());
+            }
+        });
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mCurrentLoadStatus = LOAD_STATUS_NORMAL;
+            }
+        });
+        animator.start();
+    }
+
+    /**
      * 处理手指松开后, LoadView的回弹
      */
     private void restoreLoadView() {
@@ -213,8 +307,8 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
             if (mLoadCreator != null) {
                 mLoadCreator.onLoading(mLoadView);
             }
-            if (mListener != null) {
-                mListener.onLoadMore();
+            if (mLoadListener != null) {
+                mLoadListener.onLoadMore();
             }
         }
         // 回弹到指定位置
@@ -231,7 +325,7 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
     }
 
     /**
-     * 设置加载View的marginBottom
+     * 设置 LoadView marginBottom 的值
      */
     private void setLoadViewMarginBottom(int marginBottom) {
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) mLoadView.getLayoutParams();
@@ -240,28 +334,6 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         }
         params.bottomMargin = marginBottom;
         mLoadView.setLayoutParams(params);
-    }
-
-    /**
-     * 上拉加载完成
-     *
-     * @param result         加载结果
-     * @param disappearDelay 刷新完成后的消失时间(mm)
-     */
-    public void onLoadComplete(CharSequence result, long disappearDelay) {
-        // 只有在加载状态时才执行停止加载
-        if (mCurrentLoadStatus == LOAD_STATUS_LOADING) {
-            mCurrentLoadStatus = LOAD_STATUS_NORMAL;
-            if (mLoadCreator != null) {
-                mLoadCreator.onComplete(mLoadView, result);
-            }
-            postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    restoreLoadView();
-                }
-            }, disappearDelay);
-        }
     }
 
     /**
