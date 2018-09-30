@@ -11,8 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 /**
- * 1. 添加Header和Footer
- * 2. 添加空数据显示的View
+ * 支持添加 Header/Footer/空视图的 RecyclerView, 对 RecyclerView 的增强
  *
  * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
  * @version 1.0

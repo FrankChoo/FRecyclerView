@@ -10,9 +10,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 /**
- * 包级可用
- * 1. 采用装饰设计模式
- * 2. 在构造函数中传入 Adapter 即可对用户自己创建的 Adapter 进行拓展
+ * 封装了 Header 和 Footer 的 Adapter, 对 RecyclerView.Adapter 的增强
  *
  * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
  * @version 1.0
