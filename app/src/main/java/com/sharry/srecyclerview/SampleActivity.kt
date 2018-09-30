@@ -6,7 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity() {
+class SampleActivity : AppCompatActivity() {
 
     private val dataSet = arrayListOf<String>()
 
@@ -20,7 +20,8 @@ class MainActivity : AppCompatActivity() {
     private fun initView() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = SampleAdapter(this, dataSet)
-        // 添加下拉刷新
+        recyclerView.setDragCoefficient(0.6f)
+        // 设置下拉刷新的 View
         recyclerView.setRefreshViewCreator(SampleRefreshViewCreator())
         // 触发下拉刷新的回调
         recyclerView.setOnRefreshListener {

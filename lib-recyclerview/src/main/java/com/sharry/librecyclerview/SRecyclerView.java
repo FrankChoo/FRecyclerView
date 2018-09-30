@@ -45,7 +45,6 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
      */
     private int mDistanceY = 0;                                                   // 当前拖拽的距离
     private int mPrevDragDistance = 0;                                            // 未换手之前的已经拖拽的距离
-    private float mDragIndex = 0.3f;                                              // 手指拖拽阻尼系数
     private float mDragContrastY = 0f;                                            // 拖拽的基准位置
     private float mLastMoveY = 0;                                                 // 记录上一次手指移动的距离
     private boolean mIsEdgeDragging = false;                                      // 是否正在进行边缘拖拽
@@ -189,10 +188,10 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
                 }
                 // 解决上拉加载更多自动滚动问题, 上拉加载的时候将 RecyclerView 锁定在最后一行
                 if (mIsEdgeDragging) {
-                    scrollToPosition(getAdapter().getItemCount() - 1);
+                    // scrollToPosition(getAdapter().getItemCount() - 1);
                 }
                 // 获取手指触摸拖拽的距离
-                mDistanceY = mPrevDragDistance + (int) ((e.getRawY() - mDragContrastY) * mDragIndex);
+                mDistanceY = mPrevDragDistance + (int) ((e.getRawY() - mDragContrastY) * mDragCoefficient);
                 // 如果是已经到达底部，并且不断的向上拉，那么不断的改变loadView的marginBottom的值
                 if (mDistanceY < 0) {
                     mIsEdgeDragging = true;
@@ -206,7 +205,7 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
             case MotionEvent.ACTION_UP: {
                 if (mIsEdgeDragging) {
                     restoreLoadView();
-                    mIsEdgeDragging = false;
+                    releaseArgs();
                 }
                 break;
             }
@@ -353,4 +352,15 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         }
     }
 
+    /**
+     * 重置与刷新相关的参数
+     */
+    private void releaseArgs() {
+        mDistanceY = 0;
+        mPrevDragDistance = 0;
+        mDragContrastY = 0f;
+        mLastMoveY = 0;
+        mIsEdgeDragging = false;
+        mIsPointChanged = false;
+    }
 }

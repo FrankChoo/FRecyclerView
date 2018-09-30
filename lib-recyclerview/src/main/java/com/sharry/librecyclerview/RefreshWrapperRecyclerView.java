@@ -31,6 +31,7 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
     private static final int REFRESH_STATUS_PULL_DOWN_REFRESH = 746;
     private static final int REFRESH_STATUS_LOOSEN_REFRESHING = 107;
     private static final int REFRESH_STATUS_REFRESHING = 272;
+    private static final float DEFAULT_DRAG_COEFFICIENT = 0.3f;
 
     /*
       Fields associated with pull down refresh view.
@@ -46,11 +47,11 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
      */
     private int mDistanceY = 0;                                                   // 当前拖拽的距离
     private int mPrevDragDistance = 0;                                            // 未换手之前的已经拖拽的距离
-    private float mDragIndex = 0.3f;                                              // 手指拖拽阻尼系数
     private float mDragContrastY = 0f;                                            // 拖拽的基准位置
     private float mLastMoveY = 0;                                                 // 记录上一次手指移动的距离
     private boolean mIsEdgeDragging = false;                                      // 是否正在进行边缘拖拽
     private boolean mIsPointChanged = false;                                      // 是否发生了手指切换
+    protected float mDragCoefficient = DEFAULT_DRAG_COEFFICIENT;                  // 手指拖拽阻尼系数
 
     public RefreshWrapperRecyclerView(Context context) {
         super(context);
@@ -97,6 +98,15 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
      */
     public void setOnRefreshListener(OnRefreshListener listener) {
         this.mRefreshListener = listener;
+    }
+
+    /**
+     * 设置拖住拖拽的阻尼系数
+     *
+     * @param coefficient range in [0, 1]
+     */
+    public void setDragCoefficient(float coefficient) {
+        this.mDragCoefficient = coefficient;
     }
 
     /**
@@ -186,12 +196,13 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
                         null == mRefreshCreator || null == mRefreshView) {
                     return super.onTouchEvent(e);
                 }
-                // 下拉刷新的时候将 RecyclerView 锁定在第一个 item 的位置
+                // 将 RecyclerView 锁定在第一个 item 的位置
+                // 防止下拉刷新导致位置不固定, 导致刷新的 Item 飘动
                 if (mIsEdgeDragging) {
                     scrollToPosition(0);
                 }
                 // 获取手指触摸拖拽的距离
-                mDistanceY = mPrevDragDistance + (int) ((e.getRawY() - mDragContrastY) * mDragIndex);
+                mDistanceY = mPrevDragDistance + (int) ((e.getRawY() - mDragContrastY) * mDragCoefficient);
                 // 如果是已经到达头部，并且不断的向下拉，那么不断的改变 refreshView 的 marginTop 的值
                 if (mDistanceY > 0) {
                     mIsEdgeDragging = true;
@@ -206,7 +217,7 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
                 // 若没有手指在拖拽, 则进行释放
                 if (mIsEdgeDragging) {
                     handleRefreshViewRestore();
-                    mIsEdgeDragging = false;
+                    releaseArgs();
                 }
                 break;
             }
@@ -324,6 +335,18 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
         } else {
             return ViewCompat.canScrollVertically(this, -1);
         }
+    }
+
+    /**
+     * 重置与刷新相关的参数
+     */
+    private void releaseArgs() {
+        mDistanceY = 0;
+        mPrevDragDistance = 0;
+        mDragContrastY = 0f;
+        mLastMoveY = 0;
+        mIsEdgeDragging = false;
+        mIsPointChanged = false;
     }
 
 }

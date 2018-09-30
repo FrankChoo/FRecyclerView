@@ -101,6 +101,16 @@ class WrapRecyclerView extends RecyclerView {
     }
 
     /**
+     * 添加页脚
+     */
+    void addFooterView(int position, View footerView) {
+        mFooterViews.add(position, footerView);
+        if (mWrapAdapter != null) {
+            mWrapAdapter.addFooterView(footerView);
+        }
+    }
+
+    /**
      * 移除页脚
      */
     public void removeFooterView(View footerView) {

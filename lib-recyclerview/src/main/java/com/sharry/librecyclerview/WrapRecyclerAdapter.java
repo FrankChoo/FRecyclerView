@@ -89,7 +89,7 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
     };
 
-    public WrapRecyclerAdapter(RecyclerView.Adapter adapter) {
+    WrapRecyclerAdapter(RecyclerView.Adapter adapter) {
         mHeaderViews = new SparseArray<>();
         mFooterViews = new SparseArray<>();
         mPrimitiveAdapter = adapter;
@@ -148,7 +148,7 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     /**
      * 添加头部
      */
-    public void addHeaderView(View view) {
+    void addHeaderView(View view) {
         int index = mHeaderViews.indexOfValue(view);
         // 判断该HeaderView是否已经被添加过
         if (index == -1) {
@@ -160,7 +160,7 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     /**
      * 添加底部
      */
-    public void addFooterView(View view) {
+    void addFooterView(View view) {
         int index = mFooterViews.indexOfValue(view);
         // 判断该FooterView是否已经被添加过
         if (index == -1) {
@@ -172,28 +172,30 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     /**
      * 移除头部
      */
-    public void removeHeaderView(View view) {
+    void removeHeaderView(View view) {
         int index = mHeaderViews.indexOfValue(view);
-        if (index == -1) return;
-        mHeaderViews.removeAt(index);
-        notifyDataSetChanged();
+        if (index != -1) {
+            mHeaderViews.removeAt(index);
+            notifyDataSetChanged();
+        }
     }
 
     /**
      * 移除底部
      */
-    public void removeFooterView(View view) {
+    void removeFooterView(View view) {
         int index = mFooterViews.indexOfValue(view);
-        if (index == -1) return;
-        mFooterViews.removeAt(index);
-        notifyDataSetChanged();
+        if (index != -1) {
+            mFooterViews.removeAt(index);
+            notifyDataSetChanged();
+        }
     }
 
     /**
      * 添加数据为空时, RecyclerView 需要显示的 View
      * 判断是否为空时不包含 Header 和 Footer
      */
-    public void addEmptyDataView(View emptyDataView) {
+    void addEmptyDataView(View emptyDataView) {
         // 1. 移除之前的空数据View
         removeHeaderView(mEmptyDataView);
         // 2. 更新空数据View
@@ -265,5 +267,4 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             Log.e(TAG, "unregisterAdapterDataObserver failed.", e);
         }
     }
-
 }
