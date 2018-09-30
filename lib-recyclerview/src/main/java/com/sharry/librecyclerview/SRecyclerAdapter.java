@@ -13,26 +13,18 @@ import androidx.recyclerview.widget.RecyclerView;
 /**
  * 通用的 RecyclerViewAdapter
  * <p>
- * 1. 子类需要复写 getLayoutResId 方法, 根据 当前位置的数据 或者 直接根据位置 来返回不同的布局文件
+ * 1. 子类需要复写 {@link #getLayoutResId} 方法, 根据 当前位置的数据 或者 直接根据位置 来返回不同的布局文件
+ * <p>
+ * 2. 子类需要复写 {@link #convert} 方法, 用于绑定数据, holder 中封装了开发时常用的方法
+ * <p>
+ * 3. 实现 ItemView 点击事件/ 长按事件, 复写 {@link #onItemClick}/{@link #onItemLongClick}
+ * <p>
+ * 4. 实现 ItemView 的 Sub view 点击事件/ 长按事件
+ * step1: 在 convert 中调用 {@link SViewHolder#addClickListener}/{@link SViewHolder#addLongClickListener}
+ * step2: 复写 {@link #onItemChildClick}/ {@link #onItemChildLongClick}
  *
  * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
  * @version 1.0
- * @see #getLayoutResId
- * <p>
- * 2. 子类需要复写 convert 方法, 用于绑定数据, holder中封装了开发时常用的方法
- * @see #convert
- * <p>
- * 3. 实现 ItemView 点击事件/ 长按事件, 复写 onItemClick/onItemLongClick
- * @see #onItemClick
- * @see #onItemLongClick
- * <p>
- * 4. 实现 ItemView 子视图点击事件/ 长按事件
- * step1: 在 convert 中调用 holder.addClickListener/addLongClickListener
- * @see SViewHolder#addClickListener
- * @see SViewHolder#addLongClickListener
- * step2: 复写 onItemChildClick/onItemChildLongClick
- * @see #onItemChildClick
- * @see #onItemChildLongClick
  * @since 2017/10/11 9:30
  */
 public abstract class SRecyclerAdapter<T> extends RecyclerView.Adapter<SViewHolder>

@@ -16,8 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 
 /**
- * 支持上拉加载更多的 RecyclerView, 用户通过 setLoadViewCreator() 方法自定义上拉加载效果
- * 继承了 RefreshRecyclerView: 下拉刷新, 添加 Header 和 Footer 的功能
+ * 支持上拉加载更多的 RecyclerView, 对 RefreshWrapperRecyclerView 的增强
  *
  * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
  * @version 1.0
@@ -25,15 +24,17 @@ import androidx.core.view.ViewCompat;
  */
 public class SRecyclerView extends RefreshWrapperRecyclerView {
 
-
     /*
-      Constant associate with pull up load view status.
+      Constant associated with pull up load view status.
      */
     private static final int LOAD_STATUS_NORMAL = 14;
     private static final int LOAD_STATUS_PULL_UP_LOADING = 47;
     private static final int LOAD_STATUS_LOOSEN_LOADING = 480;
     private static final int LOAD_STATUS_LOADING = 799;
 
+    /*
+      Fields associated with pull up load view.
+     */
     private LoadViewCreator mLoadCreator = null;                                // 上拉加载更多的辅助类
     private OnLoadMoreListener mLoadListener = null;                            // 上拉加载更多的触发时的回调
     private View mLoadView = null;                                              // 上拉加载更多的头部View
@@ -64,6 +65,9 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
 
     /* ========================================== 上拉加载更多相关 ==================================================*/
 
+    /**
+     * 上拉加载更多触发的监听器
+     */
     public interface OnLoadMoreListener {
         void onLoadMore();
     }
@@ -94,12 +98,12 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
     }
 
     /**
-     * 上拉加载完成
+     * 通知上拉加载完成
      *
      * @param result         加载结果
      * @param disappearDelay 刷新完成后的消失时间(mm)
      */
-    public void onLoadComplete(CharSequence result, long disappearDelay) {
+    public void notifyLoadComplete(CharSequence result, long disappearDelay) {
         // 只有在加载状态时才执行停止加载
         if (mCurrentLoadStatus == LOAD_STATUS_LOADING) {
             if (mLoadCreator != null) {

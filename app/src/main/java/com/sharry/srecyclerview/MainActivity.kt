@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
         // 触发下拉刷新的回调
         recyclerView.setOnRefreshListener {
             recyclerView.postDelayed({
-                recyclerView.onRefreshComplete("下拉刷新成功", 1000)
+                recyclerView.notifyRefreshComplete("下拉刷新成功", 1000)
             }, 2000)
         }
         // 添加页眉
@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         // 触发上拉加载的回调
         recyclerView.setOnLoadMoreListener {
             recyclerView.postDelayed({
-                recyclerView.onLoadComplete("暂无更多数据", 1000)
+                recyclerView.notifyLoadComplete("暂无更多数据", 1000)
             }, 1000)
         }
     }

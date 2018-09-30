@@ -16,9 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 
 /**
- * 支持下拉刷新的View, 通过通过addRefreshViewCreator()去自定义下拉刷新效果
- * 支持侧滑删除与长按拖动
- * 继承了WrapRecyclerView: 添加Header和Footer的功能
+ * 支持下拉刷新的 RefreshView, 对 WrapRecyclerView 的增强
  *
  * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
  * @version 1.0
@@ -27,7 +25,7 @@ import androidx.core.view.ViewCompat;
 class RefreshWrapperRecyclerView extends WrapRecyclerView {
 
     /*
-       Constant associate with pull down refresh status.
+       Constant associated with pull down refresh status.
     */
     private static final int REFRESH_STATUS_NORMAL = 795;
     private static final int REFRESH_STATUS_PULL_DOWN_REFRESH = 746;
@@ -35,7 +33,7 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
     private static final int REFRESH_STATUS_REFRESHING = 272;
 
     /*
-      Refresh Fields
+      Fields associated with pull down refresh view.
      */
     private RefreshViewCreator mRefreshCreator;                                    // 下拉刷新视图的构造者
     private OnRefreshListener mRefreshListener;                                    // 处理刷新回调监听
@@ -66,11 +64,15 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
         super(context, attrs, defStyle);
     }
 
+
+    /* ========================================== 下拉刷新相关 ==================================================*/
+
+    /**
+     * 触发下拉刷新的监听器
+     */
     public interface OnRefreshListener {
         void onRefresh();
     }
-
-    /* ========================================== 下拉刷新相关 ==================================================*/
 
     /**
      * 设置下拉刷新视图的构建器
@@ -91,19 +93,19 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
     }
 
     /**
-     * 设置下拉刷新已触发的回调
+     * 下拉刷新时候触发时的回调
      */
     public void setOnRefreshListener(OnRefreshListener listener) {
         this.mRefreshListener = listener;
     }
 
     /**
-     * 刷新完成
+     * 通知刷新完成
      *
      * @param result         刷新结果
      * @param disappearDelay 刷新完成后的消失时间(mm)
      */
-    public void onRefreshComplete(CharSequence result, long disappearDelay) {
+    public void notifyRefreshComplete(CharSequence result, long disappearDelay) {
         if (mCurrentRefreshStatus == REFRESH_STATUS_REFRESHING) {
             if (null != mRefreshCreator) {
                 mRefreshCreator.onComplete(mRefreshView, result);
@@ -300,7 +302,6 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
         animator.start();
     }
 
-
     /**
      * 设置 RefreshView marginTop 的值
      */
@@ -311,19 +312,6 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
         }
         params.topMargin = marginTop;
         mRefreshView.setLayoutParams(params);
-    }
-
-
-    /**
-     * @return Whether it is possible for the child view of this layout to
-     * scroll up. Override this if the child view is a custom view.
-     */
-    private boolean canScrollDown() {
-        if (Build.VERSION.SDK_INT < 14) {
-            return ViewCompat.canScrollVertically(this, 1) || this.getScrollY() < 0;
-        } else {
-            return ViewCompat.canScrollVertically(this, 1);
-        }
     }
 
     /**
