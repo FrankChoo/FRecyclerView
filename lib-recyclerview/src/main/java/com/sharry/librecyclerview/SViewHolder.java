@@ -177,8 +177,8 @@ public class SViewHolder extends RecyclerView.ViewHolder {
      */
     private int getPositionWithoutHeader(ViewGroup parent) {
         int holderPosition = getAdapterPosition();
-        if (parent instanceof WrapRecyclerView) {
-            holderPosition -= ((WrapRecyclerView) parent).getHeaderCount();
+        if (parent instanceof WrapperRecyclerView) {
+            holderPosition -= ((WrapperRecyclerView) parent).getHeaderCount();
         }
         return holderPosition;
     }

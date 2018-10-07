@@ -22,7 +22,7 @@ import androidx.core.view.ViewCompat;
  * @version 1.0
  * @since 2017/10/11.
  */
-class RefreshWrapperRecyclerView extends WrapRecyclerView {
+class RefreshWrapperRecyclerView extends WrapperRecyclerView {
 
     /*
        Constant associated with pull down refresh status.

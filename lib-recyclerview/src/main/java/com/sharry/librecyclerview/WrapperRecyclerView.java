@@ -17,24 +17,31 @@ import androidx.recyclerview.widget.RecyclerView;
  * @version 1.0
  * @since 2017/10/11.
  */
-class WrapRecyclerView extends RecyclerView {
+class WrapperRecyclerView extends RecyclerView {
 
-    private Adapter mOriginAdapter;
-    private WrapRecyclerAdapter mWrapAdapter;
+
+    /*
+       View caches.
+     */
     private View mEmptyView;
     private List<View> mHeaderViews = new ArrayList<>();
     private List<View> mFooterViews = new ArrayList<>();
+    /*
+      Fields
+     */
+    private Adapter mOriginAdapter;                      // 被装饰的 Adapter
+    private DecoratedAdapter mDecoratedAdapter;          // 装饰的 Adapter
     private boolean mIsAdjustSpanSize;
 
-    public WrapRecyclerView(Context context) {
+    public WrapperRecyclerView(Context context) {
         super(context);
     }
 
-    public WrapRecyclerView(Context context, @Nullable AttributeSet attrs) {
+    public WrapperRecyclerView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public WrapRecyclerView(Context context, @Nullable AttributeSet attrs, int defStyle) {
+    public WrapperRecyclerView(Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
@@ -46,28 +53,28 @@ class WrapRecyclerView extends RecyclerView {
     @Override
     public void setAdapter(Adapter adapter) {
         // 解决多次setAdapter的问题
-        if (mWrapAdapter != null) {
-            mWrapAdapter.unregisterAdapterDataObserver();
-            mWrapAdapter = null;
+        if (mDecoratedAdapter != null) {
+            mDecoratedAdapter.unregisterAdapterDataObserver();
+            mDecoratedAdapter = null;
         }
-        mWrapAdapter = new WrapRecyclerAdapter(adapter);
+        mDecoratedAdapter = new DecoratedAdapter(adapter);
         // 解决GridLayout添加头部和底部也要占据一行
-        mWrapAdapter.adjustSpanSize(this, mIsAdjustSpanSize);
+        mDecoratedAdapter.adjustSpanSize(this, mIsAdjustSpanSize);
         // 添加空数据展示的 View
         if (mEmptyView != null) {
-            mWrapAdapter.addEmptyDataView(mEmptyView);
+            mDecoratedAdapter.addEmptyDataView(mEmptyView);
         }
         // 添加页眉
         for (View headerView : mHeaderViews) {
-            mWrapAdapter.addHeaderView(headerView);
+            mDecoratedAdapter.addHeaderView(headerView);
         }
         // 添加页脚
         for (View footerView : mFooterViews) {
-            mWrapAdapter.addFooterView(footerView);
+            mDecoratedAdapter.addFooterView(footerView);
         }
         // 保存原先的 Adapter
         mOriginAdapter = adapter;
-        super.setAdapter(mWrapAdapter);
+        super.setAdapter(mDecoratedAdapter);
     }
 
     /**
@@ -75,8 +82,8 @@ class WrapRecyclerView extends RecyclerView {
      */
     public void addHeaderView(View headerView) {
         mHeaderViews.add(headerView);
-        if (mWrapAdapter != null) {
-            mWrapAdapter.addHeaderView(headerView);
+        if (mDecoratedAdapter != null) {
+            mDecoratedAdapter.addHeaderView(headerView);
         }
     }
 
@@ -85,8 +92,8 @@ class WrapRecyclerView extends RecyclerView {
      */
     public void removeHeaderView(View headerView) {
         mHeaderViews.remove(headerView);
-        if (mWrapAdapter != null) {
-            mWrapAdapter.removeHeaderView(headerView);
+        if (mDecoratedAdapter != null) {
+            mDecoratedAdapter.removeHeaderView(headerView);
         }
     }
 
@@ -95,8 +102,8 @@ class WrapRecyclerView extends RecyclerView {
      */
     public void addFooterView(View footerView) {
         mFooterViews.add(footerView);
-        if (mWrapAdapter != null) {
-            mWrapAdapter.addFooterView(footerView);
+        if (mDecoratedAdapter != null) {
+            mDecoratedAdapter.addFooterView(footerView);
         }
     }
 
@@ -105,8 +112,8 @@ class WrapRecyclerView extends RecyclerView {
      */
     void addFooterView(int position, View footerView) {
         mFooterViews.add(position, footerView);
-        if (mWrapAdapter != null) {
-            mWrapAdapter.addFooterView(footerView);
+        if (mDecoratedAdapter != null) {
+            mDecoratedAdapter.addFooterView(footerView);
         }
     }
 
@@ -115,8 +122,8 @@ class WrapRecyclerView extends RecyclerView {
      */
     public void removeFooterView(View footerView) {
         mFooterViews.remove(footerView);
-        if (mWrapAdapter != null) {
-            mWrapAdapter.removeFooterView(footerView);
+        if (mDecoratedAdapter != null) {
+            mDecoratedAdapter.removeFooterView(footerView);
         }
     }
 
@@ -125,8 +132,8 @@ class WrapRecyclerView extends RecyclerView {
      */
     public void setAdjustGrideSpanSize(boolean isAdjust) {
         mIsAdjustSpanSize = isAdjust;
-        if (mWrapAdapter != null) {
-            mWrapAdapter.adjustSpanSize(this, mIsAdjustSpanSize);
+        if (mDecoratedAdapter != null) {
+            mDecoratedAdapter.adjustSpanSize(this, mIsAdjustSpanSize);
         }
     }
 
@@ -135,8 +142,8 @@ class WrapRecyclerView extends RecyclerView {
      */
     public void addEmptyDataView(View emptyView) {
         mEmptyView = emptyView;
-        if (mWrapAdapter != null) {
-            mWrapAdapter.addEmptyDataView(emptyView);
+        if (mDecoratedAdapter != null) {
+            mDecoratedAdapter.addEmptyDataView(emptyView);
         }
     }
 

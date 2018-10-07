@@ -10,34 +10,45 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 /**
- * 封装了 Header 和 Footer 的 Adapter, 对 RecyclerView.Adapter 的增强
+ * 装饰的 Adapter, 封装了 Header 和 Footer 的 Adapter, 对 RecyclerView.Adapter 的增强
  *
  * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
  * @version 1.0
  * @since 2018/8/23 9:32
  */
-class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+class DecoratedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final String TAG = WrapRecyclerAdapter.class.getSimpleName();
-    // 基本的头部类型开始位置, 充当 mHeaderViews 的key
-    private int mKeyHeader = 1000;
-    // 基本的底部类型开始位置, 充当 mFooterViews 的key
-    private int mKeyFooter = 2000;
-
-    // 相关的页眉/页脚/空视图
+    /*
+      Constants.
+     */
+    private static final String TAG = DecoratedAdapter.class.getSimpleName();
+    private static final int KEY_HEADER_START = 1000;
+    private static final int KEY_FOOTER_START = 2000;
+    /*
+      View caches.
+     */
     private SparseArray<View> mHeaderViews;
     private SparseArray<View> mFooterViews;
     private View mEmptyDataView;
-
-    // 原始的 Adapter
-    private RecyclerView.Adapter mPrimitiveAdapter;
-
-    // 创建代理观察者
+    /*
+      Keys associated with header and footer.
+     */
+    private int mCurKeyHeader = KEY_HEADER_START;
+    private int mCurKeyFooter = KEY_FOOTER_START;
+    /*
+      原始的 Adapter
+     */
+    private RecyclerView.Adapter mOriginAdapter;
+    /*
+      数据变更的监听器
+     */
     private RecyclerView.AdapterDataObserver mDataObserver = new RecyclerView.AdapterDataObserver() {
         @Override
         public void onChanged() {
-            if (mPrimitiveAdapter == null) return;
-            if (!(mPrimitiveAdapter instanceof WrapRecyclerAdapter)) {
+            if (null == mOriginAdapter) {
+                return;
+            }
+            if (!(mOriginAdapter instanceof DecoratedAdapter)) {
                 notifyDataSetChanged();
             }
             onItemDataChangedInternal();
@@ -45,8 +56,10 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         @Override
         public void onItemRangeRemoved(int positionStart, int itemCount) {
-            if (mPrimitiveAdapter == null) return;
-            if (!(mPrimitiveAdapter instanceof WrapRecyclerAdapter)) {
+            if (null == mOriginAdapter) {
+                return;
+            }
+            if (!(mOriginAdapter instanceof DecoratedAdapter)) {
                 notifyItemRemoved(positionStart + mHeaderViews.size());
             }
             onItemDataChangedInternal();
@@ -54,8 +67,10 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         @Override
         public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
-            if (mPrimitiveAdapter == null) return;
-            if (!(mPrimitiveAdapter instanceof WrapRecyclerAdapter)) {
+            if (null == mOriginAdapter) {
+                return;
+            }
+            if (!(mOriginAdapter instanceof DecoratedAdapter)) {
                 notifyItemMoved(fromPosition + mHeaderViews.size(), toPosition + mHeaderViews.size());
             }
             onItemDataChangedInternal();
@@ -63,8 +78,10 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         @Override
         public void onItemRangeChanged(int positionStart, int itemCount) {
-            if (mPrimitiveAdapter == null) return;
-            if (!(mPrimitiveAdapter instanceof WrapRecyclerAdapter)) {
+            if (null == mOriginAdapter) {
+                return;
+            }
+            if (!(mOriginAdapter instanceof DecoratedAdapter)) {
                 notifyItemChanged(positionStart + mHeaderViews.size());
             }
             onItemDataChangedInternal();
@@ -72,8 +89,10 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         @Override
         public void onItemRangeChanged(int positionStart, int itemCount, Object payload) {
-            if (mPrimitiveAdapter == null) return;
-            if (!(mPrimitiveAdapter instanceof WrapRecyclerAdapter)) {
+            if (null == mOriginAdapter) {
+                return;
+            }
+            if (!(mOriginAdapter instanceof DecoratedAdapter)) {
                 notifyItemChanged(positionStart + mHeaderViews.size(), payload);
             }
             onItemDataChangedInternal();
@@ -81,20 +100,22 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         @Override
         public void onItemRangeInserted(int positionStart, int itemCount) {
-            if (mPrimitiveAdapter == null) return;
-            if (!(mPrimitiveAdapter instanceof WrapRecyclerAdapter)) {
+            if (null == mOriginAdapter) {
+                return;
+            }
+            if (!(mOriginAdapter instanceof DecoratedAdapter)) {
                 notifyItemInserted(positionStart + mHeaderViews.size());
             }
             onItemDataChangedInternal();
         }
     };
 
-    WrapRecyclerAdapter(RecyclerView.Adapter adapter) {
+    DecoratedAdapter(RecyclerView.Adapter adapter) {
         mHeaderViews = new SparseArray<>();
         mFooterViews = new SparseArray<>();
-        mPrimitiveAdapter = adapter;
-        // 注册mAdapter状态变化的监听器, 统一由本类代理去实现
-        mPrimitiveAdapter.registerAdapterDataObserver(mDataObserver);
+        mOriginAdapter = adapter;
+        // 注册 mAdapter 状态变化的监听器, 统一我们自定义的 Observer 去实现
+        mOriginAdapter.registerAdapterDataObserver(mDataObserver);
     }
 
     @Override
@@ -105,12 +126,12 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
         if (isFooterPosition(position)) {
             // 直接返回position位置的所对应的key值, 充当viewType
-            position = position - mHeaderViews.size() - mPrimitiveAdapter.getItemCount();
+            position = position - mHeaderViews.size() - mOriginAdapter.getItemCount();
             return mFooterViews.keyAt(position);
         }
         // 返回列表Adapter的getItemViewType
         position = position - mHeaderViews.size();
-        return mPrimitiveAdapter.getItemViewType(position);
+        return mOriginAdapter.getItemViewType(position);
     }
 
     @NonNull
@@ -124,7 +145,7 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             View footerView = mFooterViews.get(viewType);
             return createHeaderFooterViewHolder(footerView);
         } else {
-            return mPrimitiveAdapter.onCreateViewHolder(parent, viewType);
+            return mOriginAdapter.onCreateViewHolder(parent, viewType);
         }
     }
 
@@ -136,13 +157,13 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
         // 计算一下位置
         position = holder.getAdapterPosition() - mHeaderViews.size();
-        mPrimitiveAdapter.onBindViewHolder(holder, position);
+        mOriginAdapter.onBindViewHolder(holder, position);
     }
 
     @Override
     public int getItemCount() {
         // 条数三者相加 = 底部条数 + 头部条数 + Adapter的条数
-        return mPrimitiveAdapter.getItemCount() + mHeaderViews.size() + mFooterViews.size();
+        return mOriginAdapter.getItemCount() + mHeaderViews.size() + mFooterViews.size();
     }
 
     /**
@@ -150,9 +171,9 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
      */
     void addHeaderView(View view) {
         int index = mHeaderViews.indexOfValue(view);
-        // 判断该HeaderView是否已经被添加过
+        // 判断该 HeaderView 是否已经被添加过
         if (index == -1) {
-            mHeaderViews.put(mKeyHeader++, view);
+            mHeaderViews.put(mCurKeyHeader++, view);
         }
         notifyDataSetChanged();
     }
@@ -164,7 +185,7 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         int index = mFooterViews.indexOfValue(view);
         // 判断该FooterView是否已经被添加过
         if (index == -1) {
-            mFooterViews.put(mKeyFooter++, view);
+            mFooterViews.put(mCurKeyFooter++, view);
         }
         notifyDataSetChanged();
     }
@@ -192,45 +213,24 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     }
 
     /**
-     * 添加数据为空时, RecyclerView 需要显示的 View
-     * 判断是否为空时不包含 Header 和 Footer
+     * 添加空数据视图
+     * <p>
+     * conditions:
+     * 1. 添加数据为空时, RecyclerView 需要显示的 View
+     * 2. 判断是否为空时不包含 Header 和 Footer
      */
     void addEmptyDataView(View emptyDataView) {
-        // 1. 移除之前的空数据View
+        // 1. 移除之前的空数据 View
         removeHeaderView(mEmptyDataView);
-        // 2. 更新空数据View
+        // 2. 更新空数据 View
         mEmptyDataView = emptyDataView;
         onItemDataChangedInternal();
     }
 
     /**
-     * 是不是头部位置
-     */
-    private boolean isHeaderPosition(int position) {
-        // 当前Item的position位置小于头部数量则说明是头部的Item
-        return position < mHeaderViews.size();
-    }
-
-    /**
-     * 是不是底部位置
-     */
-    private boolean isFooterPosition(int position) {
-        return position >= (mHeaderViews.size() + mPrimitiveAdapter.getItemCount());
-    }
-
-    /**
-     * 获取用于建页眉和页脚的 ViewHolder
-     */
-    private RecyclerView.ViewHolder createHeaderFooterViewHolder(View view) {
-        return new RecyclerView.ViewHolder(view) {
-
-        };
-    }
-
-    /**
      * 解决GridLayoutManager添加头部和底部不占用一行的问题
      */
-    public void adjustSpanSize(RecyclerView recycler, boolean adjust) {
+    void adjustSpanSize(RecyclerView recycler, boolean adjust) {
         if (adjust && recycler.getLayoutManager() instanceof GridLayoutManager) {
             final GridLayoutManager layoutManager = (GridLayoutManager) recycler.getLayoutManager();
             layoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
@@ -245,26 +245,52 @@ class WrapRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     }
 
     /**
-     * 内部通知数据变更了
-     */
-    private void onItemDataChangedInternal() {
-        if (mEmptyDataView == null) return;
-        // 获取原生 Adapter 的 Item 数量的 EmptyDataView 当做头部添加进去
-        if (mPrimitiveAdapter.getItemCount() == 0) {
-            addHeaderView(mEmptyDataView);
-        } else {
-            removeHeaderView(mEmptyDataView);
-        }
-    }
-
-    /**
      * 解注册监听器
      */
-    public void unregisterAdapterDataObserver() {
+    void unregisterAdapterDataObserver() {
         try {
             unregisterAdapterDataObserver(mDataObserver);
         } catch (Exception e) {
             Log.e(TAG, "unregisterAdapterDataObserver failed.", e);
+        }
+    }
+
+    /**
+     * 是不是头部位置
+     */
+    private boolean isHeaderPosition(int position) {
+        // 当前 Item 的 position 位置小于头部数量则说明是 Header
+        return position < mHeaderViews.size();
+    }
+
+    /**
+     * 是不是底部位置
+     */
+    private boolean isFooterPosition(int position) {
+        return position >= (mHeaderViews.size() + mOriginAdapter.getItemCount());
+    }
+
+    /**
+     * 获取用于建页眉和页脚的 ViewHolder
+     */
+    private RecyclerView.ViewHolder createHeaderFooterViewHolder(View view) {
+        return new RecyclerView.ViewHolder(view) {
+
+        };
+    }
+
+    /**
+     * 内部通知数据变更了
+     */
+    private void onItemDataChangedInternal() {
+        if (null == mEmptyDataView) {
+            return;
+        }
+        // 获取原生 Adapter 的 Item 数量的 EmptyDataView 当做头部添加进去
+        if (0 == mOriginAdapter.getItemCount()) {
+            addHeaderView(mEmptyDataView);
+        } else {
+            removeHeaderView(mEmptyDataView);
         }
     }
 }
