@@ -25,25 +25,27 @@ import androidx.recyclerview.widget.RecyclerView;
 public class SViewHolder extends RecyclerView.ViewHolder {
 
     private static final int INVALIDATE_VIEW_TYPE = -1;
+    /*
+      Caches
+     */
+    private SparseArray<View> mViews = new SparseArray<>();                               // 用来存放子 View, 减少 findViewById 的次数
+    private List<Integer> mClickIds = new ArrayList<>();                                  // 用来存放设置了点击事件的 View 的 ID(防止多次 bindViewData, 创建多个点击事件实例)
+    private List<Integer> mLongClickIds = new ArrayList<>();                              // 用来存放设置了长按事件的 View 的 ID(防止多次 bindViewData, 创建多个点击事件实例)
+    private int mViewType;                                                                // 获取当前的 View 类型
+    private OnItemClickInteraction mClickInteraction;                                     // 用于与 Adapter 之间进行交互
 
-    // 用来存放子 View 减少 findViewById 的次数
-    private SparseArray<View> mViews = new SparseArray<>();
-    // 用来存放设置了点击事件的 View 的 ID(防止多次 bindViewData, 创建多个点击事件实例)
-    private List<Integer> mClickIds = new ArrayList<>();
-    // 用来存放设置了长按事件的 View 的 ID(防止多次 bindViewData, 创建多个点击事件实例)
-    private List<Integer> mLongClickIds = new ArrayList<>();
-
-    // 获取当前的 View 类型
-    private int mViewType = INVALIDATE_VIEW_TYPE;
-
-    // 用于与 Adapter 之间进行交互
-    private OnItemClickInteraction mClickInteraction;
+    /**
+     * U can load image more easier when U use instantiation this interface.
+     */
+    public interface HolderImageLoader {
+        void displayImage(Context context, String uri, ImageView imageView);
+    }
 
     public SViewHolder(View itemView, int viewType, OnItemClickInteraction interaction) {
         super(itemView);
         bindItemViewListener(itemView);
-        mViewType = viewType;
-        mClickInteraction = interaction;
+        this.mViewType = viewType;
+        this.mClickInteraction = interaction;
     }
 
     /**
@@ -71,7 +73,7 @@ public class SViewHolder extends RecyclerView.ViewHolder {
     /**
      * 设置 View 的 Visibility
      */
-    public SViewHolder setViewVisibility(int viewId, int visibility) {
+    public SViewHolder setVisibility(int viewId, int visibility) {
         getView(viewId).setVisibility(visibility);
         return this;
     }
@@ -99,7 +101,7 @@ public class SViewHolder extends RecyclerView.ViewHolder {
      */
     public SViewHolder setImageUri(int viewId, String uri, HolderImageLoader imageLoader) {
         ImageView imageView = getView(viewId);
-        if (imageLoader == null) {
+        if (null == imageLoader) {
             throw new NullPointerException("SViewHolder.setImageUri -> parameter imageLoader must not be null!");
         }
         imageLoader.displayImage(imageView.getContext(), uri, imageView);
@@ -117,8 +119,9 @@ public class SViewHolder extends RecyclerView.ViewHolder {
             getView(viewId).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    mClickInteraction.onItemChildClick(v, getPositionWithoutHeader((ViewGroup)
-                            itemView.getParent()));
+                    mClickInteraction.onItemChildClick(
+                            v,
+                            getPositionWithoutHeader((ViewGroup) itemView.getParent()));
                 }
             });
         }
@@ -134,8 +137,10 @@ public class SViewHolder extends RecyclerView.ViewHolder {
             getView(viewId).setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    return mClickInteraction.onItemChildLongClick(v, getPositionWithoutHeader((ViewGroup)
-                            itemView.getParent()));
+                    return mClickInteraction.onItemChildLongClick(
+                            v,
+                            getPositionWithoutHeader((ViewGroup) itemView.getParent())
+                    );
                 }
             });
         }
@@ -149,15 +154,19 @@ public class SViewHolder extends RecyclerView.ViewHolder {
         itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mClickInteraction.onItemClick(v, getPositionWithoutHeader((ViewGroup)
-                        itemView.getParent()));
+                mClickInteraction.onItemClick(
+                        v,
+                        getPositionWithoutHeader((ViewGroup) itemView.getParent())
+                );
             }
         });
         itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                return mClickInteraction.onItemLongClick(v, getPositionWithoutHeader((ViewGroup)
-                        itemView.getParent()));
+                return mClickInteraction.onItemLongClick(
+                        v,
+                        getPositionWithoutHeader((ViewGroup) itemView.getParent())
+                );
             }
         });
     }
@@ -168,7 +177,7 @@ public class SViewHolder extends RecyclerView.ViewHolder {
      */
     private int getPositionWithoutHeader(ViewGroup parent) {
         int holderPosition = getAdapterPosition();
-        if (parent != null && parent instanceof WrapRecyclerView) {
+        if (parent instanceof WrapRecyclerView) {
             holderPosition -= ((WrapRecyclerView) parent).getHeaderCount();
         }
         return holderPosition;
@@ -177,25 +186,38 @@ public class SViewHolder extends RecyclerView.ViewHolder {
     /**
      * 条目点击交互的接口
      */
-    public interface OnItemClickInteraction {
-        // 条目的点击
+    interface OnItemClickInteraction {
+        /**
+         * item 的点击事件
+         *
+         * @param v        itemView
+         * @param position item 的位置(不包括 Header / Footer / RefreshView / LoadView)
+         */
         void onItemClick(View v, int position);
 
-        // 条目的长按
+        /**
+         * item 的长按击事件
+         *
+         * @param v        itemView
+         * @param position item 的位置(不包括 Header / Footer / RefreshView / LoadView)
+         */
         boolean onItemLongClick(View v, int position);
 
-        // 条目子元素的点击
+        /**
+         * Sub view 的点击事件
+         *
+         * @param v        itemView
+         * @param position item 的位置(不包括 Header / Footer / RefreshView / LoadView)
+         */
         void onItemChildClick(View v, int position);
 
-        // 条目子元素的长按
+        /**
+         * Sub view 的长按事件
+         *
+         * @param v        itemView
+         * @param position item 的位置(不包括 Header / Footer / RefreshView / LoadView)
+         */
         boolean onItemChildLongClick(View v, int position);
     }
 
-    /**
-     * 用户加载图片
-     */
-    public interface HolderImageLoader {
-        void displayImage(Context context, String uri, ImageView imageView);
-
-    }
 }

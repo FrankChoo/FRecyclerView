@@ -20,7 +20,9 @@ class SampleActivity : AppCompatActivity() {
     private fun initView() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = SampleAdapter(this, dataSet)
-        recyclerView.setDragCoefficient(0.6f)
+        recyclerView.setDragCoefficient(0.3f)
+        // 设置是否开启顶部边缘弹性拖拽
+        recyclerView.setTopEdgeElasticDraggable(true)
         // 设置下拉刷新的 View
         recyclerView.setRefreshViewCreator(SampleRefreshViewCreator())
         // 触发下拉刷新的回调
@@ -40,6 +42,8 @@ class SampleActivity : AppCompatActivity() {
                 recyclerView, false)
         footerView.setOnClickListener { recyclerView.removeFooterView(footerView) }
         recyclerView.addFooterView(footerView)
+        // 设置是否开启底部边缘弹性拖拽
+        recyclerView.setBottomEdgeElasticDraggable(true)
         // 添加上拉加载
         recyclerView.setLoadViewCreator(SampleLoadViewCreator())
         // 触发上拉加载的回调

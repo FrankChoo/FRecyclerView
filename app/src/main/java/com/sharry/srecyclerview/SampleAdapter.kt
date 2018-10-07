@@ -7,10 +7,11 @@ import com.sharry.librecyclerview.SRecyclerAdapter
 import com.sharry.librecyclerview.SViewHolder
 
 /**
- * Created by Sharry on 2018/8/3.
- * Email: SharryChooCHN@Gmail.com
- * Version: 1.0
- * Description:
+ * Adapter 使用的实例代码
+ *
+ * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
+ * @version 1.0
+ * @since 2018/10/7 12:49
  */
 class SampleAdapter(context: Context, dataSet: MutableList<String>)
     : SRecyclerAdapter<String>(context, dataSet) {

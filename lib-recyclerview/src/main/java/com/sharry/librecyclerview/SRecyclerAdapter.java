@@ -58,8 +58,7 @@ public abstract class SRecyclerAdapter<T> extends RecyclerView.Adapter<SViewHold
         // 1. 先inflate数据
         View itemView = mInflater.inflate(viewType, parent, false);
         // 2. 构建 ViewHolder
-        SViewHolder holder = new SViewHolder(itemView, viewType, this);
-        return holder;
+        return new SViewHolder(itemView, viewType, this);
     }
 
     @Override
@@ -72,21 +71,45 @@ public abstract class SRecyclerAdapter<T> extends RecyclerView.Adapter<SViewHold
         return mDataSet.size();
     }
 
+    /**
+     * item 的点击事件
+     *
+     * @param v        itemView
+     * @param position item 的位置(不包括 Header / Footer / RefreshView / LoadView)
+     */
     @Override
     public void onItemClick(View v, int position) {
 
     }
 
+    /**
+     * item 的长按击事件
+     *
+     * @param v        itemView
+     * @param position item 的位置(不包括 Header / Footer / RefreshView / LoadView)
+     */
     @Override
     public boolean onItemLongClick(View v, int position) {
         return false;
     }
 
+    /**
+     * Sub view 的点击事件
+     *
+     * @param v        itemView
+     * @param position item 的位置(不包括 Header / Footer / RefreshView / LoadView)
+     */
     @Override
     public void onItemChildClick(View v, int position) {
 
     }
 
+    /**
+     * Sub view 的长按事件
+     *
+     * @param v        itemView
+     * @param position item 的位置(不包括 Header / Footer / RefreshView / LoadView)
+     */
     @Override
     public boolean onItemChildLongClick(View v, int position) {
         return false;

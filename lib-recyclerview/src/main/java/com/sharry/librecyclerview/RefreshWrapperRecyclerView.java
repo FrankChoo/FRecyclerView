@@ -32,6 +32,30 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
     private static final int REFRESH_STATUS_LOOSEN_REFRESHING = 107;
     private static final int REFRESH_STATUS_REFRESHING = 272;
     private static final float DEFAULT_DRAG_COEFFICIENT = 0.3f;
+    private static final RefreshViewCreator DEFAULT_REFRESH_VIEW_CREATOR = new RefreshViewCreator() {
+
+        @Override
+        public View getRefreshView(Context context, ViewGroup parent) {
+            View view = new View(context);
+            view.setLayoutParams(new ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1));
+            return view;
+        }
+
+        @Override
+        public void onPulling(View view, int currentDragHeight, int refreshViewHeight) {
+
+        }
+
+        @Override
+        public void onRefreshing(View view) {
+
+        }
+
+        @Override
+        public void onComplete(View view, CharSequence result) {
+
+        }
+    };
 
     /*
       Fields associated with pull down refresh view.
@@ -50,7 +74,6 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
     private float mDragContrastY = 0f;                                            // 拖拽的基准位置
     private float mLastMoveY = 0;                                                 // 记录上一次手指移动的距离
     private boolean mIsEdgeDragging = false;                                      // 是否正在进行边缘拖拽
-    private boolean mIsPointChanged = false;                                      // 是否发生了手指切换
     protected float mDragCoefficient = DEFAULT_DRAG_COEFFICIENT;                  // 手指拖拽阻尼系数
 
     public RefreshWrapperRecyclerView(Context context) {
@@ -64,7 +87,6 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
     public RefreshWrapperRecyclerView(Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
-
 
     /* ========================================== 下拉刷新相关 ==================================================*/
 
@@ -88,6 +110,10 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
         if (null == refreshView) {
             throw new NullPointerException("Please ensure " + refreshCreator + ".getRefreshView() return NonNull.");
         } else {
+            // 移除之前下拉刷新的 View
+            if (null != mRefreshView) {
+                removeHeaderView(mRefreshView);
+            }
             mRefreshView = refreshView;
             addHeaderView(mRefreshView);
         }
@@ -129,6 +155,18 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
         }
     }
 
+    /**
+     * 设置顶部边缘弹性拖拽
+     * 用户成功设置了自定义的 RefreshCreator 后默认支持了顶部边缘拖拽
+     *
+     * @param isElasticDraggable if true is support elastic drag, false is cannot support.
+     */
+    public void setTopEdgeElasticDraggable(boolean isElasticDraggable) {
+        if (isElasticDraggable && null == mRefreshCreator) {
+            setRefreshViewCreator(DEFAULT_REFRESH_VIEW_CREATOR);
+        }
+    }
+
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
         super.onMeasure(widthSpec, heightSpec);
@@ -158,28 +196,17 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
         switch (ev.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
                 mDragContrastY = ev.getRawY();
-                mPrevDragDistance = 0;
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (mIsPointChanged) {
-                    // 记录切换焦点之前的距离
+                float curY = ev.getRawY();
+                // 判断是否触发了双触点
+                if (Math.abs(curY - mLastMoveY) >= ViewConfiguration.get(getContext()).getScaledDoubleTapSlop() >> 1) {
+                    // 记录之前拖拽的距离
                     mPrevDragDistance = mDistanceY;
-                    // 记录新的拖拽基准的位置
-                    mDragContrastY = ev.getRawY();
-                    mIsPointChanged = false;
-                } else {
-                    float curY = ev.getRawY();
-                    // 未切换 Point 的情况下, 判断是否触发了双触点(此情况与焦点切换一样处理)
-                    if (Math.abs(curY - mLastMoveY) >= ViewConfiguration.get(getContext())
-                            .getScaledDoubleTapSlop()) {
-                        mPrevDragDistance = mDistanceY;
-                        mDragContrastY = curY;
-                    }
-                    mLastMoveY = ev.getRawY();
+                    // 记录拖拽基准的位置
+                    mDragContrastY = curY;
                 }
-                break;
-            case MotionEvent.ACTION_POINTER_UP:
-                mIsPointChanged = true;
+                mLastMoveY = ev.getRawY();
                 break;
             default:
                 break;
@@ -192,8 +219,8 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
         switch (e.getAction()) {
             case MotionEvent.ACTION_MOVE: {
                 // 若不满足下拉刷新的条件则, 直接回调父类方法
-                if (canScrollUp() || mCurrentRefreshStatus == REFRESH_STATUS_REFRESHING ||
-                        null == mRefreshCreator || null == mRefreshView) {
+                if (canScrollUp() || mCurrentRefreshStatus == REFRESH_STATUS_REFRESHING
+                        || null == mRefreshCreator || null == mRefreshView) {
                     return super.onTouchEvent(e);
                 }
                 // 将 RecyclerView 锁定在第一个 item 的位置
@@ -217,7 +244,7 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
                 // 若没有手指在拖拽, 则进行释放
                 if (mIsEdgeDragging) {
                     handleRefreshViewRestore();
-                    releaseArgs();
+                    recycleArgs();
                 }
                 break;
             }
@@ -257,7 +284,8 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
         if (null == mRefreshView) {
             return;
         }
-        if (REFRESH_STATUS_LOOSEN_REFRESHING == mCurrentRefreshStatus) {
+        if (REFRESH_STATUS_LOOSEN_REFRESHING == mCurrentRefreshStatus
+                && DEFAULT_REFRESH_VIEW_CREATOR != mRefreshCreator) {
             restoreToRefreshPos();
         } else {
             restoreToRefreshInitPos();
@@ -276,8 +304,8 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
             mRefreshListener.onRefresh();
         }
         // 回弹到刷新的位置
-        int finalTopMargin = 0;
         int currentTopMargin = ((ViewGroup.MarginLayoutParams) mRefreshView.getLayoutParams()).topMargin;
+        int finalTopMargin = 0;
         ValueAnimator animator = ObjectAnimator.ofInt(currentTopMargin, finalTopMargin)
                 .setDuration(Math.abs(currentTopMargin - finalTopMargin));
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -338,15 +366,14 @@ class RefreshWrapperRecyclerView extends WrapRecyclerView {
     }
 
     /**
-     * 重置与刷新相关的参数
+     * 重置相关的参数
      */
-    private void releaseArgs() {
+    private void recycleArgs() {
         mDistanceY = 0;
         mPrevDragDistance = 0;
         mDragContrastY = 0f;
         mLastMoveY = 0;
         mIsEdgeDragging = false;
-        mIsPointChanged = false;
     }
 
 }

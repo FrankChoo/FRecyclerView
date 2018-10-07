@@ -31,7 +31,30 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
     private static final int LOAD_STATUS_PULL_UP_LOADING = 47;
     private static final int LOAD_STATUS_LOOSEN_LOADING = 480;
     private static final int LOAD_STATUS_LOADING = 799;
+    private static final LoadViewCreator DEFAULT_LOAD_VIEW_CREATOR = new LoadViewCreator() {
 
+        @Override
+        public View getLoadView(Context context, ViewGroup parent) {
+            View view = new View(context);
+            view.setLayoutParams(new ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1));
+            return view;
+        }
+
+        @Override
+        public void onPulling(View view, int currentDragHeight, int refreshViewHeight) {
+
+        }
+
+        @Override
+        public void onLoading(View view) {
+
+        }
+
+        @Override
+        public void onComplete(View view, CharSequence result) {
+
+        }
+    };
     /*
       Fields associated with pull up load view.
      */
@@ -48,7 +71,6 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
     private float mDragContrastY = 0f;                                            // 拖拽的基准位置
     private float mLastMoveY = 0;                                                 // 记录上一次手指移动的距离
     private boolean mIsEdgeDragging = false;                                      // 是否正在进行边缘拖拽
-    private boolean mIsPointChanged = false;                                      // 是否发生了手指切换
 
     public SRecyclerView(Context context) {
         super(context);
@@ -84,6 +106,10 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         if (null == loadView) {
             throw new NullPointerException("Please ensure " + loadCreator + ".getLoadView() return NonNull.");
         } else {
+            // 移除之前的上拉加载的 LoadView
+            if (null != mLoadView) {
+                removeFooterView(mLoadView);
+            }
             mLoadView = loadView;
             addFooterView(mLoadView);
         }
@@ -117,6 +143,18 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         }
     }
 
+    /**
+     * 设置底部边缘弹性拖拽
+     * 用户成功设置了自定义的 LoadCreator 后默认支持了顶部边缘拖拽
+     *
+     * @param isElasticDraggable if true is support elastic drag, false is cannot support.
+     */
+    public void setBottomEdgeElasticDraggable(boolean isElasticDraggable) {
+        if (isElasticDraggable && null == mLoadCreator) {
+            setLoadViewCreator(DEFAULT_LOAD_VIEW_CREATOR);
+        }
+    }
+
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
         super.onMeasure(widthSpec, heightSpec);
@@ -147,28 +185,17 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         switch (ev.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
                 mDragContrastY = ev.getRawY();
-                mPrevDragDistance = 0;
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (mIsPointChanged) {
-                    // 记录切换焦点之前的距离
+                float curY = ev.getRawY();
+                // 未切换 Point 的情况下, 判断是否触发了双触点(此情况与焦点切换一样处理)
+                if (Math.abs(curY - mLastMoveY) >= ViewConfiguration.get(getContext()).getScaledDoubleTapSlop() >> 1) {
+                    // 记录之前拖拽的距离
                     mPrevDragDistance = mDistanceY;
-                    // 记录新的拖拽基准的位置
-                    mDragContrastY = ev.getRawY();
-                    mIsPointChanged = false;
-                } else {
-                    float curY = ev.getRawY();
-                    // 未切换 Point 的情况下, 判断是否触发了双触点(此情况与焦点切换一样处理)
-                    if (Math.abs(curY - mLastMoveY) >= ViewConfiguration.get(getContext())
-                            .getScaledDoubleTapSlop()) {
-                        mPrevDragDistance = mDistanceY;
-                        mDragContrastY = curY;
-                    }
-                    mLastMoveY = ev.getRawY();
+                    // 记录拖拽基准的位置
+                    mDragContrastY = curY;
                 }
-                break;
-            case MotionEvent.ACTION_POINTER_UP:
-                mIsPointChanged = true;
+                mLastMoveY = ev.getRawY();
                 break;
             default:
                 break;
@@ -181,18 +208,14 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         switch (e.getAction()) {
             case MotionEvent.ACTION_MOVE: {
                 // 如果是在最底部才处理，否则不需要处理
-                if (canScrollDown() || LOAD_STATUS_LOADING == mCurrentLoadStatus ||
-                        null == mLoadCreator || null == mLoadView) {
+                if (canScrollDown() || LOAD_STATUS_LOADING == mCurrentLoadStatus
+                        || null == mLoadCreator || null == mLoadView) {
                     // 如果没有到达最顶端，也就是说还可以向上滚动就什么都不处理
                     return super.onTouchEvent(e);
                 }
-                // 解决上拉加载更多自动滚动问题, 上拉加载的时候将 RecyclerView 锁定在最后一行
-                if (mIsEdgeDragging) {
-                    // scrollToPosition(getAdapter().getItemCount() - 1);
-                }
                 // 获取手指触摸拖拽的距离
                 mDistanceY = mPrevDragDistance + (int) ((e.getRawY() - mDragContrastY) * mDragCoefficient);
-                // 如果是已经到达底部，并且不断的向上拉，那么不断的改变loadView的marginBottom的值
+                // 如果是已经到达底部，并且不断的向上拉，那么不断的改变 loadView 的 marginBottom 的值
                 if (mDistanceY < 0) {
                     mIsEdgeDragging = true;
                     int marginBottom = -mDistanceY - mLoadViewHeight;
@@ -204,8 +227,8 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
             }
             case MotionEvent.ACTION_UP: {
                 if (mIsEdgeDragging) {
-                    restoreLoadView();
-                    releaseArgs();
+                    handleLoadViewRestore();
+                    recycleArgs();
                 }
                 break;
             }
@@ -240,7 +263,8 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
         if (null == mLoadView) {
             return;
         }
-        if (LOAD_STATUS_LOOSEN_LOADING == mCurrentLoadStatus) {
+        if (LOAD_STATUS_LOOSEN_LOADING == mCurrentLoadStatus &&
+                DEFAULT_LOAD_VIEW_CREATOR != mLoadCreator) {
             restoreToLoadPos();
         } else {
             restoreToLoadInitPos();
@@ -259,8 +283,8 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
             mLoadListener.onLoadMore();
         }
         // 回弹到指定位置
-        int finalBottomMargin = 0;
         int currentBottomMargin = ((ViewGroup.MarginLayoutParams) mLoadView.getLayoutParams()).bottomMargin;
+        int finalBottomMargin = 0;
         ValueAnimator animator = ObjectAnimator.ofInt(currentBottomMargin, finalBottomMargin)
                 .setDuration(Math.abs(currentBottomMargin - finalBottomMargin));
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -276,9 +300,9 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
      * 回弹到初始位置
      */
     private void restoreToLoadInitPos() {
-        // 回弹到指定位置
-        int finalBottomMargin = 1 - mLoadViewHeight;
+        // 回弹到初始位置
         int currentBottomMargin = ((ViewGroup.MarginLayoutParams) mLoadView.getLayoutParams()).bottomMargin;
+        int finalBottomMargin = 1 - mLoadViewHeight;
         ValueAnimator animator = ObjectAnimator.ofInt(currentBottomMargin, finalBottomMargin)
                 .setDuration(Math.abs(currentBottomMargin - finalBottomMargin));
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -291,37 +315,6 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
             @Override
             public void onAnimationEnd(Animator animation) {
                 mCurrentLoadStatus = LOAD_STATUS_NORMAL;
-            }
-        });
-        animator.start();
-    }
-
-    /**
-     * 处理手指松开后, LoadView的回弹
-     */
-    private void restoreLoadView() {
-        if (mLoadView == null) return;
-        // 判断是否满足加载条件
-        int currentBottomMargin = ((ViewGroup.MarginLayoutParams) mLoadView.getLayoutParams()).bottomMargin;
-        int finalBottomMargin = -mLoadViewHeight + 1;
-        if (mCurrentLoadStatus == LOAD_STATUS_LOOSEN_LOADING) {
-            mCurrentLoadStatus = LOAD_STATUS_LOADING;
-            finalBottomMargin = 0;
-            if (mLoadCreator != null) {
-                mLoadCreator.onLoading(mLoadView);
-            }
-            if (mLoadListener != null) {
-                mLoadListener.onLoadMore();
-            }
-        }
-        // 回弹到指定位置
-        ValueAnimator animator = ObjectAnimator.ofFloat(currentBottomMargin, finalBottomMargin)
-                .setDuration(Math.abs(currentBottomMargin - finalBottomMargin));
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float currentBottomMargin = (float) animation.getAnimatedValue();
-                setLoadViewMarginBottom((int) currentBottomMargin);
             }
         });
         animator.start();
@@ -355,12 +348,11 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
     /**
      * 重置与刷新相关的参数
      */
-    private void releaseArgs() {
+    private void recycleArgs() {
         mDistanceY = 0;
         mPrevDragDistance = 0;
         mDragContrastY = 0f;
         mLastMoveY = 0;
         mIsEdgeDragging = false;
-        mIsPointChanged = false;
     }
 }

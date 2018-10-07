@@ -8,10 +8,11 @@ import android.widget.TextView
 import com.sharry.librecyclerview.LoadViewCreator
 
 /**
- * Created by Sharry on 2018/8/3.
- * Email: SharryChooCHN@Gmail.com
- * Version: 1.0
- * Description: 测试用的上拉加载的 Creator
+ * 测试用的上拉加载的 Creator 的示例代码
+ *
+ * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
+ * @version 1.0
+ * @since 2018/10/7 12:49
  */
 class SampleLoadViewCreator : LoadViewCreator {
 

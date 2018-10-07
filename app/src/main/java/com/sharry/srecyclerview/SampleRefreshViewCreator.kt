@@ -9,11 +9,13 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.sharry.librecyclerview.RefreshViewCreator
 
+
 /**
- * Created by Sharry on 2018/8/3.
- * Email: SharryChooCHN@Gmail.com
- * Version: 1.0
- * Description:
+ * 测试用的下拉刷新的 Creator 的示例代码
+ *
+ * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
+ * @version 1.0
+ * @since 2018/10/7 12:49
  */
 class SampleRefreshViewCreator : RefreshViewCreator {
 
