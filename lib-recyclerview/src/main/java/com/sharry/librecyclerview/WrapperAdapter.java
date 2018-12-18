@@ -16,12 +16,12 @@ import androidx.recyclerview.widget.RecyclerView;
  * @version 1.0
  * @since 2018/8/23 9:32
  */
-class DecoratedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+class WrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     /*
       Constants.
      */
-    private static final String TAG = DecoratedAdapter.class.getSimpleName();
+    private static final String TAG = WrapperAdapter.class.getSimpleName();
     private static final int KEY_HEADER_START = 1000;
     private static final int KEY_FOOTER_START = 2000;
     /*
@@ -48,7 +48,7 @@ class DecoratedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (null == mOriginAdapter) {
                 return;
             }
-            if (!(mOriginAdapter instanceof DecoratedAdapter)) {
+            if (!(mOriginAdapter instanceof WrapperAdapter)) {
                 notifyDataSetChanged();
             }
             onItemDataChangedInternal();
@@ -59,7 +59,7 @@ class DecoratedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (null == mOriginAdapter) {
                 return;
             }
-            if (!(mOriginAdapter instanceof DecoratedAdapter)) {
+            if (!(mOriginAdapter instanceof WrapperAdapter)) {
                 notifyItemRemoved(positionStart + mHeaderViews.size());
             }
             onItemDataChangedInternal();
@@ -70,7 +70,7 @@ class DecoratedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (null == mOriginAdapter) {
                 return;
             }
-            if (!(mOriginAdapter instanceof DecoratedAdapter)) {
+            if (!(mOriginAdapter instanceof WrapperAdapter)) {
                 notifyItemMoved(fromPosition + mHeaderViews.size(), toPosition + mHeaderViews.size());
             }
             onItemDataChangedInternal();
@@ -81,7 +81,7 @@ class DecoratedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (null == mOriginAdapter) {
                 return;
             }
-            if (!(mOriginAdapter instanceof DecoratedAdapter)) {
+            if (!(mOriginAdapter instanceof WrapperAdapter)) {
                 notifyItemChanged(positionStart + mHeaderViews.size());
             }
             onItemDataChangedInternal();
@@ -92,7 +92,7 @@ class DecoratedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (null == mOriginAdapter) {
                 return;
             }
-            if (!(mOriginAdapter instanceof DecoratedAdapter)) {
+            if (!(mOriginAdapter instanceof WrapperAdapter)) {
                 notifyItemChanged(positionStart + mHeaderViews.size(), payload);
             }
             onItemDataChangedInternal();
@@ -103,14 +103,14 @@ class DecoratedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (null == mOriginAdapter) {
                 return;
             }
-            if (!(mOriginAdapter instanceof DecoratedAdapter)) {
+            if (!(mOriginAdapter instanceof WrapperAdapter)) {
                 notifyItemInserted(positionStart + mHeaderViews.size());
             }
             onItemDataChangedInternal();
         }
     };
 
-    DecoratedAdapter(RecyclerView.Adapter adapter) {
+    WrapperAdapter(RecyclerView.Adapter adapter) {
         mHeaderViews = new SparseArray<>();
         mFooterViews = new SparseArray<>();
         mOriginAdapter = adapter;

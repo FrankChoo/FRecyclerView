@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 /**
@@ -41,7 +43,7 @@ public class SViewHolder extends RecyclerView.ViewHolder {
         void displayImage(Context context, String uri, ImageView imageView);
     }
 
-    public SViewHolder(View itemView, int viewType, OnItemClickInteraction interaction) {
+    SViewHolder(@NonNull View itemView, int viewType, @NonNull OnItemClickInteraction interaction) {
         super(itemView);
         bindItemViewListener(itemView);
         this.mViewType = viewType;
@@ -81,7 +83,7 @@ public class SViewHolder extends RecyclerView.ViewHolder {
     /**
      * 设置 TextView 文本
      */
-    public SViewHolder setText(int viewId, CharSequence text) {
+    public SViewHolder setText(int viewId, @Nullable CharSequence text) {
         TextView tv = getView(viewId);
         tv.setText(text);
         return this;
@@ -99,7 +101,7 @@ public class SViewHolder extends RecyclerView.ViewHolder {
     /**
      * 设置图片通过路径, 用户自行实现加载逻辑
      */
-    public SViewHolder setImageUri(int viewId, String uri, HolderImageLoader imageLoader) {
+    public SViewHolder setImageUri(int viewId, @NonNull String uri, @NonNull HolderImageLoader imageLoader) {
         ImageView imageView = getView(viewId);
         if (null == imageLoader) {
             throw new NullPointerException("SViewHolder.setImageUri -> parameter imageLoader must not be null!");
