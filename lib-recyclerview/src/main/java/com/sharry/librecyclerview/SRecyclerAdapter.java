@@ -5,10 +5,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.List;
 
 /**
  * 通用的 RecyclerViewAdapter
@@ -56,7 +56,7 @@ public abstract class SRecyclerAdapter<T> extends RecyclerView.Adapter<SViewHold
             mRecyclerView = (RecyclerView) parent;
         }
         // 1. 先inflate数据
-        View itemView = mInflater.inflate(viewType, parent, false);
+        View itemView = createView(mInflater, viewType, parent);
         // 2. 构建 ViewHolder
         return new SViewHolder(itemView, viewType, this);
     }
@@ -121,6 +121,13 @@ public abstract class SRecyclerAdapter<T> extends RecyclerView.Adapter<SViewHold
      * @param data 当前position位置的数据, 根据数据返回不同的布局文件
      */
     protected abstract int getLayoutResId(T data, int position);
+
+    /**
+     * 创建 View 的方法, 子类可自己重写
+     */
+    protected View createView(@NonNull LayoutInflater inflater, int viewType, @NonNull ViewGroup parent) {
+        return inflater.inflate(viewType, parent, false);
+    }
 
     /**
      * 绑定数据

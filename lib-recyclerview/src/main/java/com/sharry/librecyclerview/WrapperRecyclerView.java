@@ -63,13 +63,13 @@ class WrapperRecyclerView extends RecyclerView {
         mWrapperAdapter = new WrapperAdapter(adapter);
         // 解决 GridLayout 添加头部和底部也要占据一行
         mWrapperAdapter.adjustSpanSize(this, mIsAdjustSpanSize);
-        // 添加空数据展示的 View
-        if (mEmptyView != null) {
-            mWrapperAdapter.addEmptyDataView(mEmptyView);
-        }
         // 添加页眉
         for (View headerView : mHeaderViews) {
             mWrapperAdapter.addHeaderView(headerView);
+        }
+        // 添加空数据展示的 View
+        if (mEmptyView != null) {
+            mWrapperAdapter.addEmptyDataView(mEmptyView);
         }
         // 添加页脚
         for (View footerView : mFooterViews) {
