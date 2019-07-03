@@ -15,6 +15,8 @@ import android.view.ViewGroup;
 import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 
+import static com.sharry.librecyclerview.LoadViewCreator.DEFAULT_LOAD_VIEW_CREATOR;
+
 /**
  * 支持上拉加载更多的 RecyclerView, 对 RefreshWrapperRecyclerView 的增强
  *
@@ -31,30 +33,7 @@ public class SRecyclerView extends RefreshWrapperRecyclerView {
     private static final int LOAD_STATUS_PULL_UP_LOADING = 47;
     private static final int LOAD_STATUS_LOOSEN_LOADING = 480;
     private static final int LOAD_STATUS_LOADING = 799;
-    private static final LoadViewCreator DEFAULT_LOAD_VIEW_CREATOR = new LoadViewCreator() {
 
-        @Override
-        public View getLoadView(Context context, ViewGroup parent) {
-            View view = new View(context);
-            view.setLayoutParams(new ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1));
-            return view;
-        }
-
-        @Override
-        public void onPulling(View view, int currentDragHeight, int refreshViewHeight) {
-
-        }
-
-        @Override
-        public void onLoading(View view) {
-
-        }
-
-        @Override
-        public void onComplete(View view, CharSequence result) {
-
-        }
-    };
     /*
       Fields associated with pull up load view.
      */

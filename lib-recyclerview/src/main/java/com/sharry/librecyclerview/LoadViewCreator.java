@@ -13,6 +13,31 @@ import android.view.ViewGroup;
  */
 public interface LoadViewCreator {
 
+    LoadViewCreator DEFAULT_LOAD_VIEW_CREATOR = new LoadViewCreator() {
+
+        @Override
+        public View getLoadView(Context context, ViewGroup parent) {
+            View view = new View(context);
+            view.setLayoutParams(new ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1));
+            return view;
+        }
+
+        @Override
+        public void onPulling(View view, int currentDragHeight, int refreshViewHeight) {
+
+        }
+
+        @Override
+        public void onLoading(View view) {
+
+        }
+
+        @Override
+        public void onComplete(View view, CharSequence result) {
+
+        }
+    };
+
     /**
      * 获取上拉加载更多的View
      *

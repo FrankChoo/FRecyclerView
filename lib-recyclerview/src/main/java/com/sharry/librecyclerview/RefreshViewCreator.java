@@ -13,6 +13,31 @@ import android.view.ViewGroup;
  */
 public interface RefreshViewCreator {
 
+    RefreshViewCreator DEFAULT_REFRESH_VIEW_CREATOR = new RefreshViewCreator() {
+
+        @Override
+        public View getRefreshView(Context context, ViewGroup parent) {
+            View view = new View(context);
+            view.setLayoutParams(new ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1));
+            return view;
+        }
+
+        @Override
+        public void onPulling(View view, int currentDragHeight, int refreshViewHeight) {
+
+        }
+
+        @Override
+        public void onRefreshing(View view) {
+
+        }
+
+        @Override
+        public void onComplete(View view, CharSequence result) {
+
+        }
+    };
+
     /**
      * 获取下拉刷新的View
      *

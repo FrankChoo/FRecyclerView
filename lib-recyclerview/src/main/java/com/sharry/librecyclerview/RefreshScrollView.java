@@ -11,27 +11,31 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
+import androidx.core.widget.NestedScrollView;
 
 /**
- * 支持下拉刷新的 RefreshView, 对 WrapRecyclerView 的增强
- *
- * @author Sharry <a href="SharryChooCHN@Gmail.com">Contact me.</a>
+ * @author Sharry <a href="sharrychoochn@gmail.com">Contact me.</a>
  * @version 1.0
- * @since 2017/10/11.
+ * @since 2019-07-03
  */
-class RefreshWrapperRecyclerView extends WrapperRecyclerView {
+public class RefreshScrollView extends NestedScrollView {
 
     /*
-       Constant associated with pull down refresh status.
-    */
+      Constant associated with pull down refresh status.
+   */
     private static final int REFRESH_STATUS_NORMAL = 795;
     private static final int REFRESH_STATUS_PULL_DOWN_REFRESH = 746;
     private static final int REFRESH_STATUS_LOOSEN_REFRESHING = 107;
     private static final int REFRESH_STATUS_REFRESHING = 272;
     private static final float DEFAULT_DRAG_COEFFICIENT = 0.3f;
+
+
+    private final LinearLayout mHolder;
 
     /*
       Fields associated with pull down refresh view.
@@ -52,95 +56,20 @@ class RefreshWrapperRecyclerView extends WrapperRecyclerView {
     private boolean mIsEdgeDragging = false;                                      // 是否正在进行边缘拖拽
     protected float mDragCoefficient = DEFAULT_DRAG_COEFFICIENT;                  // 手指拖拽阻尼系数
 
-    public RefreshWrapperRecyclerView(Context context) {
-        super(context);
+    public RefreshScrollView(@NonNull Context context) {
+        this(context, null);
     }
 
-    public RefreshWrapperRecyclerView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
+    public RefreshScrollView(@NonNull Context context, @Nullable AttributeSet attrs) {
+        this(context, attrs, 0);
     }
 
-    public RefreshWrapperRecyclerView(Context context, @Nullable AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-    }
-
-    /* ========================================== 下拉刷新相关 ==================================================*/
-
-    /**
-     * 触发下拉刷新的监听器
-     */
-    public interface OnRefreshListener {
-        void onRefresh();
-    }
-
-    /**
-     * 设置下拉刷新视图的构建器
-     */
-    public void setRefreshViewCreator(RefreshViewCreator refreshCreator) {
-        if (null == refreshCreator) {
-            throw new NullPointerException("Please ensure parameter refreshCreator NonNull.");
-        }
-        mRefreshCreator = refreshCreator;
-        // 添加头部的刷新 View
-        View refreshView = mRefreshCreator.getRefreshView(getContext(), this);
-        if (null == refreshView) {
-            throw new NullPointerException("Please ensure " + refreshCreator + ".getRefreshView() return NonNull.");
-        } else {
-            // 移除之前下拉刷新的 View
-            if (null != mRefreshView) {
-                removeHeaderView(mRefreshView);
-            }
-            mRefreshView = refreshView;
-            addHeaderView(mRefreshView);
-        }
-    }
-
-    /**
-     * 下拉刷新时候触发时的回调
-     */
-    public void setOnRefreshListener(OnRefreshListener listener) {
-        this.mRefreshListener = listener;
-    }
-
-    /**
-     * 设置拖住拖拽的阻尼系数
-     *
-     * @param coefficient range in [0, 1]
-     */
-    public void setDragCoefficient(float coefficient) {
-        this.mDragCoefficient = coefficient;
-    }
-
-    /**
-     * 通知刷新完成
-     *
-     * @param result         刷新结果
-     * @param disappearDelay 刷新完成后的消失时间(mm)
-     */
-    public void notifyRefreshComplete(CharSequence result, long disappearDelay) {
-        if (mCurrentRefreshStatus == REFRESH_STATUS_REFRESHING) {
-            if (null != mRefreshCreator) {
-                mRefreshCreator.onComplete(mRefreshView, result);
-            }
-            postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    handleRefreshViewRestore();
-                }
-            }, disappearDelay);
-        }
-    }
-
-    /**
-     * 设置顶部边缘弹性拖拽
-     * 用户成功设置了自定义的 RefreshCreator 后默认支持了顶部边缘拖拽
-     *
-     * @param isElasticDraggable if true is support elastic drag, false is cannot support.
-     */
-    public void setTopEdgeElasticDraggable(boolean isElasticDraggable) {
-        if (isElasticDraggable && null == mRefreshCreator) {
-            setRefreshViewCreator(RefreshViewCreator.DEFAULT_REFRESH_VIEW_CREATOR);
-        }
+    public RefreshScrollView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        mHolder = new LinearLayout(context);
+        mHolder.setOrientation(LinearLayout.VERTICAL);
+        super.addView(mHolder, 0, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
     @Override
@@ -199,11 +128,6 @@ class RefreshWrapperRecyclerView extends WrapperRecyclerView {
                         || null == mRefreshCreator || null == mRefreshView) {
                     return super.onTouchEvent(e);
                 }
-                // 将 RecyclerView 锁定在第一个 item 的位置
-                // 防止下拉刷新导致位置不固定, 导致刷新的 Item 飘动
-                if (mIsEdgeDragging) {
-                    scrollToPosition(0);
-                }
                 // 获取手指触摸拖拽的距离
                 mDistanceY = mPrevDragDistance + (int) ((e.getRawY() - mDragContrastY) * mDragCoefficient);
                 // 如果是已经到达头部，并且不断的向下拉，那么不断的改变 refreshView 的 marginTop 的值
@@ -228,6 +152,97 @@ class RefreshWrapperRecyclerView extends WrapperRecyclerView {
                 break;
         }
         return super.onTouchEvent(e);
+    }
+
+    @Override
+    public void addView(View child) {
+        mHolder.addView(child);
+    }
+
+    @Override
+    public void addView(View child, int index) {
+        mHolder.addView(child, index);
+    }
+
+    @Override
+    public void addView(View child, ViewGroup.LayoutParams params) {
+        mHolder.addView(child, params);
+    }
+
+    @Override
+    public void addView(View child, int index, ViewGroup.LayoutParams params) {
+        mHolder.addView(child, index, params);
+    }
+
+    /**
+     * 设置下拉刷新视图的构建器
+     */
+    public void setRefreshViewCreator(RefreshViewCreator refreshCreator) {
+        if (null == refreshCreator) {
+            throw new NullPointerException("Please ensure parameter refreshCreator NonNull.");
+        }
+        mRefreshCreator = refreshCreator;
+        // 添加头部的刷新 View
+        View refreshView = mRefreshCreator.getRefreshView(getContext(), this);
+        if (null == refreshView) {
+            throw new NullPointerException("Please ensure " + refreshCreator + ".getRefreshView() return NonNull.");
+        } else {
+            // 移除之前下拉刷新的 View
+            if (null != mRefreshView) {
+                mHolder.removeView(mRefreshView);
+            }
+            mHolder.addView(refreshView, 0);
+            // 更新 RefreshView
+            mRefreshView = refreshView;
+        }
+    }
+
+    /**
+     * 下拉刷新时候触发时的回调
+     */
+    public void setOnRefreshListener(OnRefreshListener listener) {
+        this.mRefreshListener = listener;
+    }
+
+    /**
+     * 设置拖住拖拽的阻尼系数
+     *
+     * @param coefficient range in [0, 1]
+     */
+    public void setDragCoefficient(float coefficient) {
+        this.mDragCoefficient = coefficient;
+    }
+
+    /**
+     * 通知刷新完成
+     *
+     * @param result         刷新结果
+     * @param disappearDelay 刷新完成后的消失时间(mm)
+     */
+    public void notifyRefreshComplete(CharSequence result, long disappearDelay) {
+        if (mCurrentRefreshStatus == REFRESH_STATUS_REFRESHING) {
+            if (null != mRefreshCreator) {
+                mRefreshCreator.onComplete(mRefreshView, result);
+            }
+            postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    handleRefreshViewRestore();
+                }
+            }, disappearDelay);
+        }
+    }
+
+    /**
+     * 设置顶部边缘弹性拖拽
+     * 用户成功设置了自定义的 RefreshCreator 后默认支持了顶部边缘拖拽
+     *
+     * @param isElasticDraggable if true is support elastic drag, false is cannot support.
+     */
+    public void setTopEdgeElasticDraggable(boolean isElasticDraggable) {
+        if (isElasticDraggable && null == mRefreshCreator) {
+            setRefreshViewCreator(RefreshViewCreator.DEFAULT_REFRESH_VIEW_CREATOR);
+        }
     }
 
     /**
@@ -350,6 +365,13 @@ class RefreshWrapperRecyclerView extends WrapperRecyclerView {
         mDragContrastY = 0f;
         mLastMoveY = 0;
         mIsEdgeDragging = false;
+    }
+
+    /**
+     * 触发下拉刷新的监听器
+     */
+    public interface OnRefreshListener {
+        void onRefresh();
     }
 
 }

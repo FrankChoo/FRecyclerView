@@ -18,19 +18,20 @@ class SampleActivity : AppCompatActivity() {
     }
 
     private fun initView() {
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = SampleAdapter(this, dataSet)
-        recyclerView.setDragCoefficient(0.3f)
-        // 设置是否开启顶部边缘弹性拖拽
-        recyclerView.setTopEdgeElasticDraggable(true)
-        // 设置下拉刷新的 View
-        recyclerView.setRefreshViewCreator(SampleRefreshViewCreator())
-        // 触发下拉刷新的回调
-        recyclerView.setOnRefreshListener {
-            recyclerView.postDelayed({
-                recyclerView.notifyRefreshComplete("下拉刷新成功", 1000)
+        refreshScrollView.setTopEdgeElasticDraggable(true)
+        refreshScrollView.setRefreshViewCreator(SampleRefreshViewCreator())
+        refreshScrollView.setOnRefreshListener {
+            refreshScrollView.postDelayed({
+                refreshScrollView.notifyRefreshComplete("下拉刷新成功", 1000)
             }, 2000)
         }
+        recyclerView.layoutManager = object : LinearLayoutManager(this) {
+            override fun canScrollVertically(): Boolean {
+                return false
+            }
+        }
+        recyclerView.adapter = SampleAdapter(this, dataSet)
+
         // 添加页眉
         val headerView = LayoutInflater.from(this).inflate(R.layout.recycler_item_test_header,
                 recyclerView, false)
@@ -42,6 +43,7 @@ class SampleActivity : AppCompatActivity() {
                 recyclerView, false)
         footerView.setOnClickListener { recyclerView.removeFooterView(footerView) }
         recyclerView.addFooterView(footerView)
+
         // 设置是否开启底部边缘弹性拖拽
         recyclerView.setBottomEdgeElasticDraggable(true)
         // 添加上拉加载
